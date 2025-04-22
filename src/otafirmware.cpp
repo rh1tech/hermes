@@ -70,7 +70,7 @@ void update_progress(int cur, int total)
 void update_error(int err)
 {
   Serial.printf("FIRMWARE update fatal error code %d\n", err);
-  firmwareUpdating == false;
+  // firmwareUpdating == false;
 }
 
 void handleOTAFirmware()
@@ -105,7 +105,7 @@ void handleOTAFirmware()
     {
     case HTTP_UPDATE_FAILED:
       Serial.printf("HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-      firmwareUpdating == false;
+      // firmwareUpdating == false;
       break;
 
     case HTTP_UPDATE_NO_UPDATES:

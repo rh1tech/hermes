@@ -39,7 +39,7 @@ void setBaudRate(int inSpeed)
     return;
   }
   int foundBaud = -1;
-  for (int i = 0; i < sizeof(bauds) / sizeof(bauds[0]); i++)
+  for (size_t i = 0; i < sizeof(bauds) / sizeof(bauds[0]); i++)
   {
     if (inSpeed == bauds[i])
     {

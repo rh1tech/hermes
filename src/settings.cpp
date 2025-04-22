@@ -25,7 +25,9 @@ String getEEPROM(int startAddress, int len)
 
 void setEEPROM(String inString, int startAddress, int maxLen)
 {
-  for (int i = startAddress; i < inString.length() + startAddress; i++)
+  for (size_t i = static_cast<size_t>(startAddress);
+       i < static_cast<size_t>(startAddress) + inString.length();
+       i++)
   {
     EEPROM.write(i, inString[i - startAddress]);
     // Serial.print(i, DEC); Serial.print(": "); Serial.println(inString[i - startAddress]);

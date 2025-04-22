@@ -1,9 +1,16 @@
+/*
+   Hermes - Serial to Wi-Fi Modem Emulator
+   Copyright (C) 2024 Mikhail Matveev (@rh1tech)
+   Based on https://github.com/ssshake/vintage-computer-wifi-modem
+   Copyright (C) 2020 Richard Bettridge (@theoldnet)
+   Licensed under GPL v3 GNU General Public License version 3
+   https://www.gnu.org/licenses/gpl-3.0.html
+*/
+
 #include <Arduino.h>
 #include "globals.h"
 
-/**
-   Arduino main init function
-*/
+// Arduino main init function
 void setup()
 {
   pinMode(LED_PIN, OUTPUT);
@@ -24,9 +31,7 @@ void setup()
   webserverSetup();
 }
 
-/**
-   Arduino main loop function
-*/
+// Arduino main loop function
 void loop()
 {
   if (firmwareUpdating == true)

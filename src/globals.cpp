@@ -167,7 +167,7 @@ void welcome()
 void waitForFirstInput()
 {
   char c;
-  unsigned long startMillis = millis();
+  // unsigned long startMillis = millis();
   while (c != 8 && c != 127 && c != 20)
   { // Check for the backspace key to begin
     while (c != 32)
@@ -218,7 +218,7 @@ void hangUp()
 
 void answerCall()
 {
-  tcpClient = tcpServer.available();
+  tcpClient = tcpServer.accept();
   tcpClient.setNoDelay(true); // try to disable naggle
   // tcpServer.stop();
   sendResult(R_CONNECT);
@@ -236,7 +236,7 @@ void handleIncomingConnection()
     // We're in a call already or didn't answer the call after three rings
     // We didn't answer the call. Notify our party we're busy and disconnect
     ringCount = lastRingMs = 0;
-    WiFiClient anotherClient = tcpServer.available();
+    WiFiClient anotherClient = tcpServer.accept();
     anotherClient.print(busyMsg);
     anotherClient.print("\r\n");
     anotherClient.print("CURRENT CALL LENGTH: ");
@@ -261,7 +261,7 @@ void handleIncomingConnection()
 
   if (autoAnswer == true)
   {
-    tcpClient = tcpServer.available();
+    tcpClient = tcpServer.accept();
     if (verboseResults == 1)
     {
       sendString(String("RING ") + ipToString(tcpClient.remoteIP()));
