@@ -135,145 +135,144 @@ void sendResult(int resultCode)
 
 void sendString(String msg)
 {
-  Serial.print("\r\n");
-  Serial.print(msg);
-  Serial.print("\r\n");
+    Serial.print("\r\n");
+    Serial.print(msg);
+    Serial.print("\r\n");
 }
 
 void waitForSpace()
 {
-  Serial.print("PRESS SPACE");
-  char c = 0;
-  while (c != 0x20)
-  {
-    if (Serial.available() > 0)
+    Serial.print("PRESS SPACE");
+    char c = 0;
+    while (c != 0x20)
     {
-      c = Serial.read();
+        if (Serial.available() > 0)
+        {
+            c = Serial.read();
+        }
     }
-  }
-  Serial.print("\r");
+    Serial.print("\r");
 }
 
 void welcome()
 {
-  Serial.println();
-  Serial.println("rh1.tech");
-  Serial.println("Serial Wi-Fi Modem Emulator");
-  Serial.println("Version " + build + "");
-  Serial.println("GPL3 GITHUB.COM/SSSHAKE/VINTAGE-COMPUTER-WIFI-MODEM");
-  Serial.println();
+    Serial.println();
+    Serial.println("Hermes");
+    Serial.println("Serial Wi-Fi Modem Emulator");
+    Serial.println("Version " + build + "");
+    Serial.println();
 }
 
 void waitForFirstInput()
 {
-  char c;
-  // unsigned long startMillis = millis();
-  while (c != 8 && c != 127 && c != 20)
-  { // Check for the backspace key to begin
-    while (c != 32)
-    { // Check for space to begin
-      // disabled the wait before welcome
-      while (c != 0x0a && c != 0x0d)
-      {
-        if (Serial.available() > 0)
-        {
-          c = Serial.read();
+    char c;
+    // unsigned long startMillis = millis();
+    while (c != 8 && c != 127 && c != 20)
+    { // Check for the backspace key to begin
+        while (c != 32)
+        { // Check for space to begin
+            // disabled the wait before welcome
+            while (c != 0x0a && c != 0x0d)
+            {
+                if (Serial.available() > 0)
+                {
+                    c = Serial.read();
+                }
+                if (checkButton() == 1)
+                {
+                    break; // button pressed, we're setting to 300 baud and moving on
+                }
+                // if (millis() - startMillis > 2000) {
+                // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+                // startMillis = millis();
+                // }
+                yield();
+            }
         }
-        if (checkButton() == 1)
-        {
-          break; // button pressed, we're setting to 300 baud and moving on
-        }
-        // if (millis() - startMillis > 2000) {
-        // digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-        // startMillis = millis();
-        // }
-        yield();
-      }
     }
-  }
 }
 
 String ipToString(IPAddress ip)
 {
-  char s[16];
-  sprintf(s, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-  return s;
+    char s[16];
+    sprintf(s, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    return s;
 }
 
 void hangUp()
 {
-  if (ppp)
-  {
-    ppp_close(ppp, 0);
-  }
-  else
-  {
-    tcpClient.stop();
-  }
-  callConnected = false;
-  setCarrierDCDPin(callConnected);
-  sendResult(R_NOCARRIER);
-  connectTime = 0;
+    if (ppp)
+    {
+        ppp_close(ppp, 0);
+    }
+    else
+    {
+        tcpClient.stop();
+    }
+    callConnected = false;
+    setCarrierDCDPin(callConnected);
+    sendResult(R_NOCARRIER);
+    connectTime = 0;
 }
 
 void answerCall()
 {
-  tcpClient = tcpServer.accept();
-  tcpClient.setNoDelay(true); // try to disable naggle
-  // tcpServer.stop();
-  sendResult(R_CONNECT);
-  connectTime = millis();
-  cmdMode = false;
-  callConnected = true;
-  setCarrierDCDPin(callConnected);
-  Serial.flush();
+    tcpClient = tcpServer.accept();
+    tcpClient.setNoDelay(true); // try to disable naggle
+    // tcpServer.stop();
+    sendResult(R_CONNECT);
+    connectTime = millis();
+    cmdMode = false;
+    callConnected = true;
+    setCarrierDCDPin(callConnected);
+    Serial.flush();
 }
 
 void handleIncomingConnection()
 {
-  if (callConnected == 1 || (autoAnswer == false && ringCount > 3))
-  {
-    // We're in a call already or didn't answer the call after three rings
-    // We didn't answer the call. Notify our party we're busy and disconnect
-    ringCount = lastRingMs = 0;
-    WiFiClient anotherClient = tcpServer.accept();
-    anotherClient.print(busyMsg);
-    anotherClient.print("\r\n");
-    anotherClient.print("CURRENT CALL LENGTH: ");
-    anotherClient.print(connectTimeString());
-    anotherClient.print("\r\n");
-    anotherClient.print("\r\n");
-    anotherClient.flush();
-    anotherClient.stop();
-    return;
-  }
-
-  if (autoAnswer == false)
-  {
-    if (millis() - lastRingMs > 6000 || lastRingMs == 0)
+    if (callConnected == 1 || (autoAnswer == false && ringCount > 3))
     {
-      lastRingMs = millis();
-      sendResult(R_RING);
-      ringCount++;
+        // We're in a call already or didn't answer the call after three rings
+        // We didn't answer the call. Notify our party we're busy and disconnect
+        ringCount = lastRingMs = 0;
+        WiFiClient anotherClient = tcpServer.accept();
+        anotherClient.print(busyMsg);
+        anotherClient.print("\r\n");
+        anotherClient.print("CURRENT CALL LENGTH: ");
+        anotherClient.print(connectTimeString());
+        anotherClient.print("\r\n");
+        anotherClient.print("\r\n");
+        anotherClient.flush();
+        anotherClient.stop();
+        return;
     }
-    return;
-  }
 
-  if (autoAnswer == true)
-  {
-    tcpClient = tcpServer.accept();
-    if (verboseResults == 1)
+    if (autoAnswer == false)
     {
-      sendString(String("RING ") + ipToString(tcpClient.remoteIP()));
+        if (millis() - lastRingMs > 6000 || lastRingMs == 0)
+        {
+            lastRingMs = millis();
+            sendResult(R_RING);
+            ringCount++;
+        }
+        return;
     }
-    delay(1000);
-    sendResult(R_CONNECT);
-    connectTime = millis();
-    cmdMode = false;
-    tcpClient.flush();
-    callConnected = true;
-    setCarrierDCDPin(callConnected);
-  }
+
+    if (autoAnswer == true)
+    {
+        tcpClient = tcpServer.accept();
+        if (verboseResults == 1)
+        {
+            sendString(String("RING ") + ipToString(tcpClient.remoteIP()));
+        }
+        delay(1000);
+        sendResult(R_CONNECT);
+        connectTime = millis();
+        cmdMode = false;
+        tcpClient.flush();
+        callConnected = true;
+        setCarrierDCDPin(callConnected);
+    }
 }
 
 // RTS/CTS protocol is a method of handshaking which uses one wire in each direction to allow each
@@ -286,71 +285,71 @@ void handleIncomingConnection()
 // http://electronics.stackexchange.com/questions/38022/what-is-rts-and-cts-flow-control
 void handleFlowControl()
 {
-  if (flowControl == F_NONE)
-    return;
-  // disabled in case it's accidentally pausing
-  //   if (flowControl == F_HARDWARE) {
-  //     if (digitalRead(CTS_PIN) == pinPolarity) txPaused = true;
-  //     else txPaused = false;
-  //   }
-  if (flowControl == F_SOFTWARE)
-  {
-  }
+    if (flowControl == F_NONE)
+        return;
+    // disabled in case it's accidentally pausing
+    //   if (flowControl == F_HARDWARE) {
+    //     if (digitalRead(CTS_PIN) == pinPolarity) txPaused = true;
+    //     else txPaused = false;
+    //   }
+    if (flowControl == F_SOFTWARE)
+    {
+    }
 }
 
 void handleCommandMode()
 {
-  // In command mode - don't exchange with TCP but gather characters to a string
-  if (Serial.available())
-  {
-    char chr = Serial.read();
+    // In command mode, do not exchange data with TCP but gather characters into a string.
+    if (Serial.available())
+    {
+        char chr = Serial.read();
 
-    // Convert uppercase PETSCII to lowercase ASCII (C64) in command mode only
-    if ((chr >= 193) && (chr <= 218))
-    {
-      chr -= 96;
-    }
+        // Convert uppercase PETSCII characters to lowercase ASCII (C64) in command mode only.
+        if ((chr >= 193) && (chr <= 218))
+        {
+            chr -= 96;
+        }
 
-    // Return, enter, new line, carriage return.. anything goes to end the command
-    if ((chr == '\n') || (chr == '\r'))
-    {
-      command();
+        // Return, Enter, newline, or carriage return - any of these will end the command.
+        if ((chr == '\n') || (chr == '\r'))
+        {
+            command();
+        }
+        // Backspace or Delete removes the previous character.
+        else if ((chr == 8) || (chr == 127) || (chr == 20))
+        {
+            cmd.remove(cmd.length() - 1);
+            if (echo == true)
+            {
+                Serial.write(chr);
+            }
+        }
+        else
+        {
+            if (cmd.length() < MAX_CMD_LENGTH)
+                cmd.concat(chr);
+            if (echo == true)
+            {
+                Serial.write(chr);
+            }
+            if (hex)
+            {
+                Serial.print(chr, HEX);
+            }
+        }
     }
-    // Backspace or delete deletes previous character
-    else if ((chr == 8) || (chr == 127) || (chr == 20))
-    {
-      cmd.remove(cmd.length() - 1);
-      if (echo == true)
-      {
-        Serial.write(chr);
-      }
-    }
-    else
-    {
-      if (cmd.length() < MAX_CMD_LENGTH)
-        cmd.concat(chr);
-      if (echo == true)
-      {
-        Serial.write(chr);
-      }
-      if (hex)
-      {
-        Serial.print(chr, HEX);
-      }
-    }
-  }
 }
 
 void restoreCommandModeIfDisconnected()
 {
-  // Go to command mode if both TCP and PPP are disconnected and not in command mode
-  if ((!tcpClient.connected() && ppp == NULL) && (cmdMode == false) && callConnected == true)
-  {
-    cmdMode = true;
-    sendResult(R_NOCARRIER);
-    connectTime = 0;
-    callConnected = false;
-    setCarrierDCDPin(callConnected);
-    // if (tcpServerPort > 0) tcpServer.begin();
-  }
+    // Switch to command mode if both TCP and PPP are disconnected and the system is not already in command mode.
+    if ((!tcpClient.connected() && ppp == NULL) && (cmdMode == false) && callConnected == true)
+    {
+        cmdMode = true;
+        sendResult(R_NOCARRIER);
+        connectTime = 0;
+        callConnected = false;
+        setCarrierDCDPin(callConnected);
+        // if (tcpServerPort > 0) tcpServer.begin();
+    }
 }

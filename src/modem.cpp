@@ -73,15 +73,15 @@ void dialOut(String upCmd)
   else
   {
     // Dialing an ad-hoc number
-    int portIndex = cmd.indexOf(":");
+    int portIndex = upCmd.indexOf(":");
     if (portIndex != -1)
     {
-      host = cmd.substring(4, portIndex);
-      port = cmd.substring(portIndex + 1, cmd.length());
+      host = upCmd.substring(4, portIndex);
+      port = upCmd.substring(portIndex + 1, upCmd.length());
     }
     else
     {
-      host = cmd.substring(4, cmd.length());
+      host = upCmd.substring(4, upCmd.length());
       port = "23"; // Telnet default
     }
   }

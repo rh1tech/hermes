@@ -7,10 +7,10 @@
  *
  * ppp_pcb, PPP control block
  * data, buffer to write to serial port
- * len, length of the data buffer
- * ctx, optional user-provided callback context pointer
+ * len, the length of the data buffer
+ * ctx, an optional user-provided callback context pointer
  *
- * Return value: len if write succeed
+ * Return value: len if the write succeeds
  */
 u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx)
 {
@@ -28,7 +28,7 @@ u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx)
   }
 }
 
-// fires when connection established or torn down
+// Fires when the connection is established or torn down
 void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 {
   struct netif *pppif = ppp_netif(pcb);
@@ -63,7 +63,7 @@ void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
     // Enable NAT-ing this connection
     ip_napt_enable(pppif->ip_addr.addr, 1);
     break;
-  case PPPERR_USER: // clean disconnect
+  case PPPERR_USER: // Clean disconnect
     // sendString(F("PPP: shutdown"));
     if (ppp_free(ppp) == 0)
     {
@@ -75,7 +75,7 @@ void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
       sendString(F("ppp_free() failed"));
     }
     break;
-  // anything other than NONE or USER is an error, abort and go back to command mode
+  // Any error other than NONE or USER is considered an error; abort and return to command mode
   case PPPERR_PARAM:
     sendString(F("PPP: Invalid parameter"));
     break;

@@ -1,9 +1,8 @@
 #include <Arduino.h>
 #include "globals.h"
 
-
 /**
-   Turn on the LED and store the time, so the LED will be shortly after turned off
+   Turn on the LED and store the time, so the LED will be turned off shortly after.
 */
 void led_on()
 {

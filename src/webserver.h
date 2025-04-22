@@ -194,7 +194,7 @@ const char MAIN_page[] PROGMEM = R"=====(
             </div>
             <pre>
                 CLS
-                PRINT "PC DATA AQUITION"
+                PRINT "PC DATA ACQUISITION"
                 PRINT ""
                 PRINT "TO EXIT PRESS CTRL+PAUSE"
                 INPUT "ENTER FILE NAME: "; N$

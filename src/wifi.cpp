@@ -3,42 +3,52 @@
 
 void updateLed();
 
-void wifiSetup(){
-  if (tcpServerPort > 0) tcpServer.begin();
+void wifiSetup()
+{
+  if (tcpServerPort > 0)
+    tcpServer.begin();
 
   WiFi.mode(WIFI_STA);
 
-  //doesn't seem to work
+  // Doesn't seem to work
   String hostname = "THEOLDNET";
   WiFi.setHostname(hostname.c_str());
-  
+
   connectWiFi();
   sendResult(R_OK);
-  //tcpServer(tcpServerPort); // can't start tcpServer inside a function-- must live outside
+  // tcpServer(tcpServerPort); // Cannot start tcpServer inside a function; it must live outside
 
   digitalWrite(LED_PIN, LOW); // on
 
-  //why?
-  mdns.begin("TheOldNetWiFi", WiFi.localIP());  
+  // Why is this necessary?
+  mdns.begin("TheOldNetWiFi", WiFi.localIP());
 }
 
-void updateLed() {
-  if (WiFi.status() == WL_CONNECTED) {
-    digitalWrite(LED_PIN, LOW);  // on
-  } else {
-    digitalWrite(LED_PIN, HIGH); //off
+void updateLed()
+{
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    digitalWrite(LED_PIN, LOW); // on
+  }
+  else
+  {
+    digitalWrite(LED_PIN, HIGH); // off
   }
 }
 
-void connectWiFi() {
-  if (ssid == "" || password == "") {
+void connectWiFi()
+{
+  if (ssid == "" || password == "")
+  {
     Serial.println("CONFIGURE SSID AND PASSWORD. TYPE AT? FOR HELP.");
     return;
   }
   WiFi.begin(ssid.c_str(), password.c_str());
-  Serial.print("\nCONNECTING TO SSID "); Serial.print(ssid);
+  Serial.print("\nCONNECTING TO SSID ");
+  Serial.print(ssid);
   uint8_t i = 0;
-  while (WiFi.status() != WL_CONNECTED && i++ < 20) {
+  while (WiFi.status() != WL_CONNECTED && i++ < 20)
+  {
     digitalWrite(LED_PIN, LOW);
     delay(250);
     digitalWrite(LED_PIN, HIGH);
@@ -46,49 +56,65 @@ void connectWiFi() {
     Serial.print(".");
   }
   Serial.println();
-  if (i == 21) {
-    Serial.print("COULD NOT CONNECT TO "); Serial.println(ssid);
+  if (i == 21)
+  {
+    Serial.print("COULD NOT CONNECT TO ");
+    Serial.println(ssid);
     WiFi.disconnect();
     updateLed();
-  } else {
-    Serial.print("CONNECTED TO "); Serial.println(WiFi.SSID());
-    Serial.print("IP ADDRESS: "); Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.print("CONNECTED TO ");
+    Serial.println(WiFi.SSID());
+    Serial.print("IP ADDRESS: ");
+    Serial.println(WiFi.localIP());
     updateLed();
     check_for_firmware_update();
   }
 }
 
-void disconnectWiFi() {
+void disconnectWiFi()
+{
   WiFi.disconnect();
   updateLed();
 }
 
-void displayNetworkStatus() {
+void displayNetworkStatus()
+{
   Serial.print("WIFI STATUS: ");
-  if (WiFi.status() == WL_CONNECTED) {
+  if (WiFi.status() == WL_CONNECTED)
+  {
     Serial.println("CONNECTED");
   }
-  if (WiFi.status() == WL_IDLE_STATUS) {
+  if (WiFi.status() == WL_IDLE_STATUS)
+  {
     Serial.println("OFFLINE");
   }
-  if (WiFi.status() == WL_CONNECT_FAILED) {
+  if (WiFi.status() == WL_CONNECT_FAILED)
+  {
     Serial.println("CONNECT FAILED");
   }
-  if (WiFi.status() == WL_NO_SSID_AVAIL) {
+  if (WiFi.status() == WL_NO_SSID_AVAIL)
+  {
     Serial.println("SSID UNAVAILABLE");
   }
-  if (WiFi.status() == WL_CONNECTION_LOST) {
+  if (WiFi.status() == WL_CONNECTION_LOST)
+  {
     Serial.println("CONNECTION LOST");
   }
-  if (WiFi.status() == WL_DISCONNECTED) {
+  if (WiFi.status() == WL_DISCONNECTED)
+  {
     Serial.println("DISCONNECTED");
   }
-  if (WiFi.status() == WL_SCAN_COMPLETED) {
+  if (WiFi.status() == WL_SCAN_COMPLETED)
+  {
     Serial.println("SCAN COMPLETED");
   }
   yield();
 
-  Serial.print("SSID.......: "); Serial.println(WiFi.SSID());
+  Serial.print("SSID.......: ");
+  Serial.println(WiFi.SSID());
 
   //  Serial.print("ENCRYPTION: ");
   //  switch(WiFi.encryptionType()) {
@@ -128,20 +154,42 @@ void displayNetworkStatus() {
   Serial.println(mac[5], HEX);
   yield();
 
-  Serial.print("IP ADDRESS.: "); Serial.println(WiFi.localIP()); yield();
-  Serial.print("GATEWAY....: "); Serial.println(WiFi.gatewayIP()); yield();
-  Serial.print("SUBNET MASK: "); Serial.println(WiFi.subnetMask()); yield();
-  Serial.print("SERVER PORT: "); Serial.println(tcpServerPort); yield();
-  Serial.print("WEB CONFIG.: HTTP://"); Serial.println(WiFi.localIP()); yield();
-  Serial.print("CALL STATUS: "); yield();
-  if (callConnected) {
-    if (ppp) {
-      Serial.print("CONNECTED TO PPP"); yield();
-    } else {
-      Serial.print("CONNECTED TO "); Serial.println(ipToString(tcpClient.remoteIP())); yield();
+  Serial.print("IP ADDRESS.: ");
+  Serial.println(WiFi.localIP());
+  yield();
+  Serial.print("GATEWAY....: ");
+  Serial.println(WiFi.gatewayIP());
+  yield();
+  Serial.print("SUBNET MASK: ");
+  Serial.println(WiFi.subnetMask());
+  yield();
+  Serial.print("SERVER PORT: ");
+  Serial.println(tcpServerPort);
+  yield();
+  Serial.print("WEB CONFIG.: HTTP://");
+  Serial.println(WiFi.localIP());
+  yield();
+  Serial.print("CALL STATUS: ");
+  yield();
+  if (callConnected)
+  {
+    if (ppp)
+    {
+      Serial.print("CONNECTED TO PPP");
+      yield();
     }
-    Serial.print("CALL LENGTH: "); Serial.println(connectTimeString()); yield();
-  } else {
+    else
+    {
+      Serial.print("CONNECTED TO ");
+      Serial.println(ipToString(tcpClient.remoteIP()));
+      yield();
+    }
+    Serial.print("CALL LENGTH: ");
+    Serial.println(connectTimeString());
+    yield();
+  }
+  else
+  {
     Serial.println("NOT CONNECTED");
   }
 }

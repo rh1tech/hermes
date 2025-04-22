@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "globals.h"
+#include "globals.h" // Ensure this file contains declarations for all referenced variables and constants
 #include <EEPROM.h>
 
 // Function declarations

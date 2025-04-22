@@ -3,7 +3,7 @@
 
 void handleGopherRequest()
 {
-  // From the URL, aquire required variables
+  // From the URL, acquire required variables
   // (14 = "ATGPHgopher://")
   int portIndex = cmd.indexOf(":", 14); // Index where port number might begin
   int pathIndex = cmd.indexOf("/", 14); // Index first host name and possible port ends and path begins
@@ -46,5 +46,5 @@ void handleGopherRequest()
     setCarrierDCDPin(callConnected);
     tcpClient.print(path + "\r\n");
   }
-  delete hostChr;
+  delete[] hostChr;
 }

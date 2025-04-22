@@ -10,16 +10,15 @@
 #include <Arduino.h>
 #include "globals.h"
 
-// Arduino main init function
 void setup()
 {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH); // off
   pinMode(FLASH_BUTTON, INPUT);
   digitalWrite(FLASH_BUTTON, HIGH);
-  // the esp fork of LWIP doesn't automatically init when enabling nat, so just do it in setup
+  // The ESP fork of LWIP doesn't automatically initialize when enabling NAT, so we initialize it in setup
   ip_napt_init(IP_NAPT_MAX, IP_PORTMAP_MAX);
-  // why? was this part of the eeprom upgrade code or not, it preceeded the comments for it
+  // Part of the EEPROM upgrade code or not, it preceded the comments for it
   EEPROM.begin(LAST_ADDRESS + 1);
   delay(10);
   eepromUpgradeToDeprecate();
@@ -31,7 +30,6 @@ void setup()
   webserverSetup();
 }
 
-// Arduino main loop function
 void loop()
 {
   if (firmwareUpdating == true)
@@ -42,8 +40,7 @@ void loop()
   handleFlowControl();
   handleWebServer();
   checkButton();
-  // No idea what this is
-  // New unanswered incoming connection on server listen socket
+  // Handle new unanswered incoming connection on the server listen socket
   if (tcpServer.hasClient())
   {
     handleIncomingConnection();
