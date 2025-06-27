@@ -6,6 +6,8 @@ Hermes is a fork of [The Old Net - RS232 Serial WIFI Modem](https://github.com/s
 
 This firmware transforms an ESP8266 microcontroller into a Hayes-compatible serial modem that connects vintage computers to the internet via WiFi, maintaining the authentic experience of classic terminal communications.
 
+Documentation: [rh1.tech](https://rh1.tech/projects/hermes)
+
 ## Features
 
 ### Core Functionality:
