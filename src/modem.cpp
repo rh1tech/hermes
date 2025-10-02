@@ -47,7 +47,6 @@ void handleQuietMode(String upCmd)
 
 void dialOut(String upCmd)
 {
-  // Can't place a call while in a call
   if (callConnected)
   {
     sendResult(R_ERROR);
@@ -55,7 +54,6 @@ void dialOut(String upCmd)
   }
   String host, port;
   int portIndex;
-  // Dialing a stored number
   if (upCmd.indexOf("ATDS") == 0)
   {
     byte speedNum = upCmd.substring(4, 5).toInt();
@@ -72,7 +70,6 @@ void dialOut(String upCmd)
   }
   else
   {
-    // Dialing an ad-hoc number
     int portIndex = upCmd.indexOf(":");
     if (portIndex != -1)
     {
@@ -82,10 +79,10 @@ void dialOut(String upCmd)
     else
     {
       host = upCmd.substring(4, upCmd.length());
-      port = "23"; // Telnet default
+      port = "23";
     }
   }
-  host.trim(); // remove leading or trailing spaces
+  host.trim();
   port.trim();
 
   if (host.equals("PPP") || host.equals("777"))
@@ -97,7 +94,6 @@ void dialOut(String upCmd)
       return;
     }
     ppp = pppos_create(&ppp_netif, ppp_output_cb, ppp_status_cb, NULL);
-    // usepeerdns also means offer our configured DNS servers during negotiation
     ppp_set_usepeerdns(ppp, 1);
     ppp_set_ipcp_dnsaddr(ppp, 0, ip_2_ip4((const ip_addr_t *)WiFi.dnsIP(0)));
     ppp_set_ipcp_dnsaddr(ppp, 1, ip_2_ip4((const ip_addr_t *)WiFi.dnsIP(1)));
@@ -128,7 +124,7 @@ void dialOut(String upCmd)
 
     return;
   }
-  Serial.print("DIALING ");
+  Serial.print("Dialing ");
   Serial.print(host);
   Serial.print(":");
   Serial.println(port);
@@ -145,7 +141,6 @@ void dialOut(String upCmd)
     Serial.flush();
     callConnected = true;
     setCarrierDCDPin(callConnected);
-    // if (tcpServerPort > 0) tcpServer.stop();
   }
   else
   {
@@ -156,9 +151,6 @@ void dialOut(String upCmd)
   delete hostChr;
 }
 
-/**
-   Perform a command given in command mode
-*/
 void command()
 {
   cmd.trim();
@@ -167,8 +159,8 @@ void command()
   Serial.println();
   String upCmd = cmd;
   upCmd.toUpperCase();
-
   /**** Just AT ****/
+
   if (upCmd == "AT")
     sendResult(R_OK);
 
@@ -516,7 +508,7 @@ void command()
   else if (upCmd.indexOf("AT$SP=") == 0)
   {
     tcpServerPort = upCmd.substring(6).toInt();
-    sendString("CHANGES REQUIRES NV SAVE (AT&W) AND RESTART");
+    sendString("Changes require to run AT&W and restart to take effect");
     sendResult(R_OK);
   }
 

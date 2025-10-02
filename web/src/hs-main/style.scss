@@ -1,0 +1,118 @@
+@use "../pico/pico.css";
+@use "sass:color";
+
+:root {
+    --pico-font-size: 95%;
+}
+
+.h-logo {
+    width: 200px;
+}
+
+.h-table {
+    margin-bottom: 0;
+}
+
+.h-error {
+    background-color: #f06c41;
+    color: #fff;
+    font-weight: bold;
+}
+
+.h-table > tbody > tr > th:first-child {
+    font-weight: bold;
+    width: 1%;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+
+.h-btns > * {
+    margin: 0.2rem;
+    &:first-child {
+        margin-left: 0;
+    }
+    &:last-child {
+        margin-right: 0;
+    }
+}
+
+$amber-50: #fff8e1 !default;
+$amber-900: #ff6f00 !default;
+$green-50: #e8f5e9 !default;
+$green-800: #1b5e20 !default;
+$red-50: #ffebee !default;
+$red-900: #b71c1c !default;
+
+.alert {
+    margin-bottom: var(--spacing); // some default space below alert element
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    color: var(--color);
+    background-color: var(--background-color);
+    border: 1px solid var(--background-color); // compensate for 1px border
+}
+
+.alert-danger {
+    --background-color: #{$red-50};
+    --color: #{$red-900};
+}
+.alert-warning {
+    --background-color: #{$amber-50};
+    --color: #{color.scale($amber-900, $lightness: -20%)};
+}
+
+.alert-success {
+    --background-color: #{$green-50};
+    --color: #{$green-800};
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    &.hidden {
+        display: none;
+    }
+}
+
+.loader {
+    width: 3rem;
+    height: 3rem;
+    border: 0.35rem solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: h-spin 0.8s linear infinite;
+}
+
+@keyframes h-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.alert.notification {
+    position: fixed;
+    top: 1rem; // top padding/offset
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 500px;
+    width: calc(100% - 2rem);
+    margin: 0;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

@@ -46,9 +46,6 @@
 #define LAST_ADDRESS 780
 #define LISTEN_PORT 23 // Listen to this if not connected. Set to zero to disable.
 
-#define FLASH_BUTTON 0 // GPIO0 (programming mode pin)
-#define LED_PIN 16     // Status LED
-#define LED_ESP_PIN 2
 #define DCD_PIN 2 // DCD Carrier Status
 
 #define RTS_PIN 13 // RTS Request to Send, connect to host's CTS pin RTS is DB9 PIN 7
@@ -57,8 +54,6 @@
 #define RING_INTERVAL 3000 // How often to print RING when having a new incoming connection (ms)
 
 #define MAX_CMD_LENGTH 256 // Maximum length for AT command
-
-#define LED_TIME 15 // How many ms to keep LED on at activity
 
 // Telnet codes
 #define DO 0xfd
@@ -99,17 +94,14 @@ enum pinPolarity_t
 }; // Is LOW (0) or HIGH (1) active?
 
 String connectTimeString();
-void eepromUpgradeToDeprecate();
 void readSettings();
 void serialSetup();
 void wifiSetup();
 void webserverSetup();
-int checkButton();
 void command();
 void handleOTAFirmware();
 void handleWebServer();
 void handleConnectedMode();
-void handleLEDState();
 void sendResult(int resultCode);
 void setCarrierDCDPin(byte carrier);
 u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx);
@@ -131,7 +123,6 @@ void defaultEEPROM();
 void handleHTTPRequest();
 void handleGopherRequest();
 void welcome();
-void led_on();
 void handleFlowControl();
 String ipToString(IPAddress ip);
 void check_for_firmware_update();
@@ -144,15 +135,11 @@ void handleReboot();
 void handleGetSettings();
 void handleUpdateSettings();
 void handleUpdateFirmware();
-void handleUpdateSpeeddial();
 void handleFactoryDefaults();
-void handleFileUpload();
 void handleGetSpeedDials();
 void handleConnectedMode();
 String getMacAddress();
 void handleFlowControl();
-void handleLEDState();
-void handleFileUpload();
 String getCallStatus();
 String getCallLength();
 void sendString(String msg);
@@ -175,7 +162,8 @@ extern struct netif ppp_netif;
 extern String speedDials[10];
 extern String ssid, password, busyMsg;
 extern byte serialspeed;
-extern String build;
+extern String hermes_version;
+extern String hermes_version_url;
 extern String cmd;
 extern bool cmdMode;
 extern bool callConnected;
@@ -184,7 +172,6 @@ extern bool verboseResults;
 extern bool firmwareUpdating;
 extern int tcpServerPort;
 extern unsigned long lastRingMs;
-extern unsigned long ledTime;
 extern const int speedDialAddresses[];
 extern const int bauds[9];
 extern bool echo;

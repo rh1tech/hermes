@@ -1,15 +1,13 @@
 #include <Arduino.h>
-#include "globals.h" // Ensure this file contains declarations for all referenced variables and constants
+#include "globals.h"
 #include <EEPROM.h>
 
-// Function declarations
 String getEEPROM(int startAddress, int len);
 void setEEPROM(String inString, int startAddress, int maxLen);
 
 String getEEPROM(int startAddress, int len)
 {
   String myString;
-
   for (int i = startAddress; i < startAddress + len; i++)
   {
     if (EEPROM.read(i) == 0x00)
@@ -17,9 +15,7 @@ String getEEPROM(int startAddress, int len)
       break;
     }
     myString += char(EEPROM.read(i));
-    // Serial.print(char(EEPROM.read(i)));
   }
-  // Serial.println();
   return myString;
 }
 
@@ -30,15 +26,10 @@ void setEEPROM(String inString, int startAddress, int maxLen)
        i++)
   {
     EEPROM.write(i, inString[i - startAddress]);
-    // Serial.print(i, DEC); Serial.print(": "); Serial.println(inString[i - startAddress]);
-    // if (EEPROM.read(i) != inString[i - startAddress]) { Serial.print(" (!)"); }
-    // Serial.println();
   }
-  // null pad the remainder of the memory space
   for (int i = inString.length() + startAddress; i < maxLen + startAddress; i++)
   {
     EEPROM.write(i, 0x00);
-    // Serial.print(i, DEC); Serial.println(": 0x00");
   }
 }
 
@@ -46,13 +37,11 @@ void defaultEEPROM()
 {
   EEPROM.write(VERSION_ADDRESS, VERSIONA);
   EEPROM.write(VERSION_ADDRESS + 1, VERSIONB);
-
   setEEPROM("", SSID_ADDRESS, SSID_LEN);
   setEEPROM("", PASS_ADDRESS, PASS_LEN);
   setEEPROM("d", IP_TYPE_ADDRESS, 1);
   EEPROM.write(SERVER_PORT_ADDRESS, highByte(LISTEN_PORT));
   EEPROM.write(SERVER_PORT_ADDRESS + 1, lowByte(LISTEN_PORT));
-
   EEPROM.write(BAUD_ADDRESS, 0x00);
   EEPROM.write(ECHO_ADDRESS, 0x01);
   EEPROM.write(AUTO_ANSWER_ADDRESS, 0x01);
@@ -61,7 +50,6 @@ void defaultEEPROM()
   EEPROM.write(FLOW_CONTROL_ADDRESS, 0x02);
   EEPROM.write(PIN_POLARITY_ADDRESS, 0x01);
   EEPROM.write(QUIET_MODE_ADDRESS, 0x00);
-
   setEEPROM("theoldnet.com:23", speedDialAddresses[0], 50);
   setEEPROM("bbs.retrocampus.com:23", speedDialAddresses[1], 50);
   setEEPROM("bbs.eotd.com:23", speedDialAddresses[2], 50);
@@ -69,12 +57,10 @@ void defaultEEPROM()
   setEEPROM("bbs.starbase21.net:23", speedDialAddresses[4], 50);
   setEEPROM("reflections.servebbs.com:23", speedDialAddresses[5], 50);
   setEEPROM("heatwavebbs.com:9640", speedDialAddresses[6], 50);
-
   for (int i = 5; i < 10; i++)
   {
     setEEPROM("", speedDialAddresses[i], 50);
   }
-
   setEEPROM("SORRY, SYSTEM IS CURRENTLY BUSY. PLEASE TRY AGAIN LATER.", BUSY_MSG_ADDRESS, BUSY_MSG_LEN);
   EEPROM.commit();
 }
@@ -83,8 +69,6 @@ void readSettings()
 {
   echo = EEPROM.read(ECHO_ADDRESS);
   autoAnswer = EEPROM.read(AUTO_ANSWER_ADDRESS);
-  // serialspeed = EEPROM.read(BAUD_ADDRESS);
-
   ssid = getEEPROM(SSID_ADDRESS, SSID_LEN);
   password = getEEPROM(PASS_ADDRESS, PASS_LEN);
   busyMsg = getEEPROM(BUSY_MSG_ADDRESS, BUSY_MSG_LEN);
@@ -94,7 +78,6 @@ void readSettings()
   flowControl = EEPROM.read(FLOW_CONTROL_ADDRESS);
   pinPolarity = EEPROM.read(PIN_POLARITY_ADDRESS);
   quietMode = EEPROM.read(QUIET_MODE_ADDRESS);
-
   for (int i = 0; i < 10; i++)
   {
     speedDials[i] = getEEPROM(speedDialAddresses[i], 50);
@@ -106,7 +89,6 @@ void writeSettings()
   setEEPROM(ssid, SSID_ADDRESS, SSID_LEN);
   setEEPROM(password, PASS_ADDRESS, PASS_LEN);
   setEEPROM(busyMsg, BUSY_MSG_ADDRESS, BUSY_MSG_LEN);
-
   EEPROM.write(BAUD_ADDRESS, serialspeed);
   EEPROM.write(ECHO_ADDRESS, byte(echo));
   EEPROM.write(AUTO_ANSWER_ADDRESS, byte(autoAnswer));
@@ -117,7 +99,6 @@ void writeSettings()
   EEPROM.write(FLOW_CONTROL_ADDRESS, byte(flowControl));
   EEPROM.write(PIN_POLARITY_ADDRESS, byte(pinPolarity));
   EEPROM.write(QUIET_MODE_ADDRESS, byte(quietMode));
-
   for (int i = 0; i < 10; i++)
   {
     setEEPROM(speedDials[i], speedDialAddresses[i], 50);
@@ -127,53 +108,63 @@ void writeSettings()
 
 void displayStoredSettings()
 {
-  Serial.println("STORED PROFILE:");
-  yield();
-  Serial.print("BAUD: ");
-  Serial.println(bauds[EEPROM.read(BAUD_ADDRESS)]);
+  Serial.println("Stored Profile:");
+  // yield();
+  const uint8_t baudIndex = EEPROM.read(BAUD_ADDRESS);
+  const uint8_t echoStored = EEPROM.read(ECHO_ADDRESS);
+  const uint8_t quietStored = EEPROM.read(QUIET_MODE_ADDRESS);
+  const uint8_t verboseStored = EEPROM.read(VERBOSE_ADDRESS);
+  const uint8_t flowStored = EEPROM.read(FLOW_CONTROL_ADDRESS);
+  const uint8_t pinPolarityStored = EEPROM.read(PIN_POLARITY_ADDRESS);
+  const uint8_t telnetStored = EEPROM.read(TELNET_ADDRESS);
+  const uint8_t autoAnswerStored = EEPROM.read(AUTO_ANSWER_ADDRESS);
+  Serial.print("Baud: ");
+  if (baudIndex < (sizeof(bauds) / sizeof(bauds[0])))
+    Serial.println(bauds[baudIndex]);
+  else
+    Serial.println("?");
   yield();
   Serial.print("SSID: ");
   Serial.println(getEEPROM(SSID_ADDRESS, SSID_LEN));
   yield();
-  Serial.print("PASS: ");
+  Serial.print("Password: ");
   Serial.println(getEEPROM(PASS_ADDRESS, PASS_LEN));
   yield();
-  // Serial.print("SERVER TCP PORT: "); Serial.println(word(EEPROM.read(SERVER_PORT_ADDRESS), EEPROM.read(SERVER_PORT_ADDRESS+1))); yield();
-  Serial.print("BUSY MSG: ");
+  Serial.print("Busy message: ");
   Serial.println(getEEPROM(BUSY_MSG_ADDRESS, BUSY_MSG_LEN));
   yield();
+  // Status flags
   Serial.print("E");
-  Serial.print(EEPROM.read(ECHO_ADDRESS));
+  Serial.print(echoStored);
   Serial.print(" ");
   yield();
   Serial.print("Q");
-  Serial.print(EEPROM.read(QUIET_MODE_ADDRESS));
+  Serial.print(quietStored);
   Serial.print(" ");
   yield();
   Serial.print("V");
-  Serial.print(EEPROM.read(VERBOSE_ADDRESS));
+  Serial.print(verboseStored);
   Serial.print(" ");
   yield();
   Serial.print("&K");
-  Serial.print(EEPROM.read(FLOW_CONTROL_ADDRESS));
+  Serial.print(flowStored);
   Serial.print(" ");
   yield();
   Serial.print("&P");
-  Serial.print(EEPROM.read(PIN_POLARITY_ADDRESS));
+  Serial.print(pinPolarityStored);
   Serial.print(" ");
   yield();
   Serial.print("NET");
-  Serial.print(EEPROM.read(TELNET_ADDRESS));
+  Serial.print(telnetStored);
   Serial.print(" ");
   yield();
   Serial.print("S0:");
-  Serial.print(EEPROM.read(AUTO_ANSWER_ADDRESS));
+  Serial.print(autoAnswerStored);
   Serial.print(" ");
   yield();
   Serial.println();
   yield();
-
-  Serial.println("STORED SPEED DIAL:");
+  Serial.println("Stored Speed Dial:");
   for (int i = 0; i < 10; i++)
   {
     Serial.print(i);
@@ -186,160 +177,96 @@ void displayStoredSettings()
 
 void storeSpeedDial(byte num, String location)
 {
-  // if (num < 0 || num > 9) { return; }
   speedDials[num] = location;
-  // Serial.print("STORED "); Serial.print(num); Serial.print(": "); Serial.println(location);
-}
-
-void eepromUpgradeToDeprecate()
-{
-  /*
-    If EEPROM version is 01 upgrade to version 02 which adds the quiet mode flag.
-    If verbose mode was previously 2 (silent) set quiet mode to on.
-    Otherwise set it to off.
-  */
-  if (EEPROM.read(VERSION_ADDRESS) == 0 && EEPROM.read(VERSION_ADDRESS + 1) == 1)
-  {
-    EEPROM.write(QUIET_MODE_ADDRESS, 0x00);
-    if (EEPROM.read(VERBOSE_ADDRESS) == 2)
-    {
-      EEPROM.write(VERBOSE_ADDRESS, 0x00);
-      EEPROM.write(QUIET_MODE_ADDRESS, 0x01);
-    }
-    else
-    {
-      EEPROM.write(QUIET_MODE_ADDRESS, 0x00);
-    }
-    EEPROM.write(VERSION_ADDRESS, VERSIONA);
-    EEPROM.write(VERSION_ADDRESS + 1, VERSIONB);
-  }
-
-  if (EEPROM.read(VERSION_ADDRESS) != VERSIONA || EEPROM.read(VERSION_ADDRESS + 1) != VERSIONB)
-  {
-    defaultEEPROM();
-  }
 }
 
 void displayHelp()
 {
   welcome();
-  Serial.println("AT COMMAND SUMMARY:");
-  yield();
-  Serial.println("DIAL HOST............: ATDTHOST:PORT");
-  yield();
-  Serial.println("SPEED DIAL...........: ATDSN (N=0-9)");
-  yield();
-  Serial.println("PPP SESSION..........: ATDTPPP");
-  yield();
-  Serial.println("SET SPEED DIAL.......: AT&ZN=HOST:PORT (N=0-9)");
-  yield();
-  Serial.println("HANDLE TELNET........: ATNETN (N=0,1)");
-  yield();
-  Serial.println("NETWORK INFO.........: ATI");
-  yield();
-  Serial.println("HTTP GET.............: ATGET<URL>");
-  yield();
-  Serial.println("GOPHER REQUEST.......: ATGPH<URL>");
-  yield();
-  // Serial.println("SERVER PORT........: AT$SP=N (N=1-65535)"); yield();
-  Serial.println("AUTO ANSWER..........: ATS0=N (N=0,1)");
-  yield();
-  Serial.println("SET BUSY MSG.........: AT$BM=YOUR BUSY MESSAGE");
-  yield();
-  Serial.println("LOAD NVRAM...........: ATZ");
-  yield();
-  Serial.println("SAVE TO NVRAM........: AT&W");
-  yield();
-  Serial.println("SHOW SETTINGS........: AT&V");
-  yield();
-  Serial.println("FACT. DEFAULTS.......: AT&F");
-  yield();
-  Serial.println("PIN POLARITY.........: AT&PN (N=0/INV,1/NORM)");
-  yield();
-  Serial.println("ECHO OFF/ON..........: ATE0 / ATE1");
-  yield();
-  Serial.println("QUIET MODE OFF/ON....: ATQ0 / ATQ1");
-  yield();
-  Serial.println("VERBOSE OFF/ON.......: ATV0 / ATV1");
-  yield();
-  Serial.println("SET SSID......: AT$SSID=WIFISSID");
-  yield();
-  Serial.println("SET PASSWORD..: AT$PASS=WIFIPASSWORD");
-  yield();
+  auto printLine = [](const __FlashStringHelper *msg)
+  {
+    Serial.println(msg);
+    yield();
+  };
+  printLine(F("AT Command Summary:"));
+  printLine(F("Dial Host:           ATDTHOST:PORT"));
+  printLine(F("Speed Dial:          ATDSN (N=0-9)"));
+  printLine(F("PPP Session.:        ATDTPPP"));
+  printLine(F("Set Speed Dial:      AT&ZN=HOST:PORT (where N is 0-9)"));
+  printLine(F("Handle Telnet:       ATNETN (N=0,1)"));
+  printLine(F("Network Information: ATI"));
+  printLine(F("HTTP GET:            ATGET<URL>"));
+  printLine(F("GOPHER Request:      ATGPH<URL>"));
+  printLine(F("Auto Answer:         ATS0=N (N=0,1)"));
+  printLine(F("Set BUSY Message:    AT$BM=YOUR BUSY MESSAGE"));
+  printLine(F("Load from NVRAM:     ATZ"));
+  printLine(F("Save to NVRAM:       AT&W"));
+  printLine(F("Show Settings:       AT&V"));
+  printLine(F("Reset To Defaults:   AT&F"));
+  printLine(F("Pin Polarity:        AT&PN (N=0/INV,1/NORM)"));
+  printLine(F("Echo On/Off:         ATE0 / ATE1"));
+  printLine(F("Quiet Mode On/Off:   ATQ0 / ATQ1"));
+  printLine(F("Verbose On/Off:      ATV1 / ATV0"));
+  printLine(F("Set SSID:            AT$SSID=WIFISSID"));
+  printLine(F("Set Password:        AT$PASS=PASSWORD"));
   waitForSpace();
-  Serial.println("SET BAUD RATE.: AT$SB=N (3,12,24,48,96");
-  yield();
-  Serial.println("                192,384,576,1152)*100");
-  yield();
-  Serial.println("FLOW CONTROL..: AT&KN (N=0/N,1/HW,2/SW)");
-  yield();
-  Serial.println("WIFI OFF/ON...: ATC0 / ATC1");
-  yield();
-  Serial.println("HANGUP........: ATH");
-  yield();
-  Serial.println("ENTER CMD MODE: +++");
-  yield();
-  Serial.println("EXIT CMD MODE.: ATO");
-  yield();
-  Serial.println("UPDATE FIRMWARE.: AT$FW");
-  yield();
-  Serial.println("QUERY MOST COMMANDS FOLLOWED BY '?'");
-  yield();
+  printLine(F("Set Baud Rate:       AT$SB=N (300,1200,2400,4800,9600,19200,38400,57600,115200)"));
+  printLine(F("Flow Control:        AT&KN (N=0/N,1/HW,2/SW)"));
+  printLine(F("Wi-Fi On/Off:        ATC1 / ATC0"));
+  printLine(F("Hang Up:             ATH"));
+  printLine(F("Enter CMD mode:      +++"));
+  printLine(F("Exit CMD mode:       ATO"));
+  printLine(F("Update Firmware:     AT$FW"));
 }
 
 void displayCurrentSettings()
 {
-  Serial.println("ACTIVE PROFILE:");
+  Serial.println(F("Active Profile:"));
   yield();
-  Serial.print("BAUD: ");
-  Serial.println(bauds[serialspeed]);
+  Serial.print(F("Baud: "));
+  if (serialspeed < (sizeof(bauds) / sizeof(bauds[0])))
+    Serial.println(bauds[serialspeed]);
+  else
+    Serial.println(F("?"));
   yield();
-  Serial.print("SSID: ");
-  Serial.println(ssid);
-  yield();
-  Serial.print("PASS: ");
-  Serial.println(password);
-  yield();
-  // Serial.print("SERVER TCP PORT: "); Serial.println(tcpServerPort); yield();
-  Serial.print("BUSY MSG: ");
-  Serial.println(busyMsg);
-  yield();
-  Serial.print("E");
+  auto printLabelValue = [&](const __FlashStringHelper *label, const String &value)
+  {
+    Serial.print(label);
+    Serial.println(value);
+    yield();
+  };
+  printLabelValue(F("SSID: "), ssid);
+  printLabelValue(F("Password: "), password);
+  printLabelValue(F("BUSY Message: "), busyMsg);
+  // Status flags
+  Serial.print(F("E"));
   Serial.print(echo);
-  Serial.print(" ");
-  yield();
-  Serial.print("Q");
+  Serial.print(F(" "));
+  Serial.print(F("Q"));
   Serial.print(quietMode);
-  Serial.print(" ");
-  yield();
-  Serial.print("V");
+  Serial.print(F(" "));
+  Serial.print(F("V"));
   Serial.print(verboseResults);
-  Serial.print(" ");
-  yield();
-  Serial.print("&K");
+  Serial.print(F(" "));
+  Serial.print(F("&K"));
   Serial.print(flowControl);
-  Serial.print(" ");
-  yield();
-  Serial.print("&P");
+  Serial.print(F(" "));
+  Serial.print(F("&P"));
   Serial.print(pinPolarity);
-  Serial.print(" ");
-  yield();
-  Serial.print("NET");
+  Serial.print(F(" "));
+  Serial.print(F("NET"));
   Serial.print(telnet);
-  Serial.print(" ");
-  yield();
-  Serial.print("S0:");
+  Serial.print(F(" "));
+  Serial.print(F("S0:"));
   Serial.print(autoAnswer);
-  Serial.print(" ");
-  yield();
+  Serial.print(F(" "));
   Serial.println();
   yield();
-
-  Serial.println("SPEED DIAL:");
+  Serial.println(F("Speed Dial:"));
   for (int i = 0; i < 10; i++)
   {
     Serial.print(i);
-    Serial.print(": ");
+    Serial.print(F(": "));
     Serial.println(speedDials[i]);
     yield();
   }

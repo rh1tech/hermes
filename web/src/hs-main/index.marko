@@ -1,0 +1,300 @@
+import logo from "../images/protea.svg";
+
+<main class="container">
+    <img src=logo alt="Protea" class="h-logo">
+    <if(state.ready && !state.error)>
+        <p class="mt-2">
+            Hermes, ESP8266-based Serial WiFi Modem is up and running.
+        </p>
+        <details name="dashboard" open>
+            <summary role="button" class="outline">
+                Status
+            </summary>
+            <article>
+                <table class="h-table striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                SSID
+                            </th>
+                            <td>${state.status.ssid}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                IP Address
+                            </th>
+                            <td>${state.status.ip}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                MAC Address
+                            </th>
+                            <td>${state.status.mac}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Gateway
+                            </th>
+                            <td>${state.status.gateway}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Subnet Mask
+                            </th>
+                            <td>${state.status.subnet}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Call Status
+                            </th>
+                            <td>${state.status.callStatus}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Call Length
+                            </th>
+                            <td>${state.status.callLength}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Baud Rate
+                            </th>
+                            <td>${state.status.baud}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Server Port
+                            </th>
+                            <td>${state.status.tcpServerPort}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+        </details>
+        <details name="dashboard">
+            <summary role="button" class="outline">
+                Settings
+            </summary>
+            <article>
+                <table class="h-table striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                Echo
+                            </th>
+                            <td>
+                                ${state.settings.echo === "1" ? "Yes" : "No"}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Auto Answer
+                            </th>
+                            <td>
+                                ${state.settings.autoAnswer === "1"
+                                    ? "Yes"
+                                    : "No"}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Baud Rate
+                            </th>
+                            <td>
+                                ${component.bauds[
+                                    parseInt(state.settings.serialSpeed, 10)
+                                ]}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                SSID
+                            </th>
+                            <td>${state.settings.ssid}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                BUSY Message
+                            </th>
+                            <td>${state.settings.busyMsg}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Server Port
+                            </th>
+                            <td>${state.status.tcpServerPort}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Telnet Mode
+                            </th>
+                            <td>
+                                ${state.settings.telnet === "1" ? "Yes" : "No"}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Verbose Results
+                            </th>
+                            <td>
+                                ${state.settings.verboseResults === "1"
+                                    ? "Yes"
+                                    : "No"}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                Quiet Mode
+                            </th>
+                            <td>
+                                ${state.settings.quietMode === "1"
+                                    ? "Yes"
+                                    : "No"}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </article>
+        </details>
+        <details name="dashboard">
+            <summary role="button" class="outline">
+                Commands
+            </summary>
+            <p>
+                <mark>Note:</mark>
+                &nbsp;
+                <b>Update</b>
+                ,${" "}
+                <b>Reboot</b>
+                ${" "}and${" "}
+                <b>Factory Reset</b>
+                ${" "}will disconnect the web server. You will need to reconnect
+                before you will be able to use this page again.
+            </p>
+            <article class="mt-2 h-btns" on-click("onCommandButtonClick")>
+                <button data-id="settings">
+                    Settings
+                </button>
+                <button data-id="hangup">
+                    Hang Up
+                </button>
+                <button data-id="update">
+                    Update
+                </button>
+                <button data-id="reboot">
+                    Reboot
+                </button>
+                <button data-id="factory" class="contrast">
+                    Factory Reset
+                </button>
+            </article>
+            <p class="mt-2">Until saved to EEPROM, your current changes to the settings are temporary.</p>
+            <article class="mt-2 h-btns" on-click("onCommandButtonClick")>
+                <button data-id="eepsave" class="contrast">
+                    EEPROM Save
+                </button>
+                ${" "}
+                <button data-id="eepload">
+                    EEPROM Load
+                </button>
+            </article>
+        </details>
+    </if>
+    <if(!state.ready && !state.error)>
+        <progress class="mt-2"/>
+    </if>
+    <if(state.error)>
+        <article class="h-error mt-2">
+            ${state.error}
+        </article>
+    </if>
+</main>
+<dialog id="settingsDialog">
+    <article>
+        <h3>Settings</h3>
+        <if(state.settingsDialogError)>
+            <article class="alert alert-danger mb-2">
+                ${state.settingsDialogError}
+            </article>
+        </if>
+        <form>
+            <fieldset>
+                <label>
+                    SSID${" "}
+                    <input
+                        name="ssid"
+                        placeholder="Your Wi-Fi Network Name"
+                        id="s_ssid">
+                </label>
+                <label>
+                    Password${" "}
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Wi-Fi Password"
+                        id="s_password">
+                </label>
+                <div class="grid">
+                    <label>
+                        Baud Rate${" "}
+                        <select name="serialSpeed" id="s_serialSpeed">
+                            <for|baud, index| of=component.bauds>
+                                <option value=index>
+                                    ${baud}
+                                </option>
+                            </for>
+                        </select>
+                    </label>
+                    <label>
+                        Server Port${" "}
+                        <input
+                            type="number"
+                            name="serverPort"
+                            placeholder="23"
+                            id="s_tcpServerPort">
+                    </label>
+                </div>
+                <label>
+                    BUSY Message${" "}
+                    <input
+                        name="busyMsg"
+                        placeholder="Your BUSY Message"
+                        id="s_busyMsg">
+                </label>
+            </fieldset>
+        </form>
+        <footer>
+            <button class="secondary" on-click("onSettingsDialogCancel")>
+                Cancel
+            </button>
+            <button on-click("onSettingsDialogSave")>
+                Save
+            </button>
+        </footer>
+    </article>
+</dialog>
+<if(state.confirmationData)>
+    <dialog open>
+        <article>
+            <h3>Confirmation</h3>
+            <p>${state.confirmationData.message}</p>
+            <footer>
+                <button
+                    class="secondary"
+                    on-click("onConfirmationDialogCancel")>
+                    Cancel
+                </button>
+                <button
+                    on-click("onConfirmationDialogConfirm")
+                    data-id=(state.confirmationData.action)>
+                    Confirm
+                </button>
+            </footer>
+        </article>
+    </dialog>
+</if>
+<if(state.loading)>
+    <div id="loadingOverlay" class="overlay">
+        <div class="loader"/>
+    </div>
+</if>

@@ -2,38 +2,22 @@
 #include "netif/ppp/ppp.h"
 #include "globals.h"
 
-/*
- * PPPoS serial output callback
- *
- * ppp_pcb, PPP control block
- * data, buffer to write to serial port
- * len, the length of the data buffer
- * ctx, an optional user-provided callback context pointer
- *
- * Return value: len if the write succeeds
- */
 u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx)
 {
-  // need to buffer for the main loop()?
   if (cmdMode)
   {
-    // don't send anything if we're in command mode
     return 0;
   }
   else
   {
-    // does a long write() mess with timing of the main loop()?
-    // or risk triggering the watchdog timer?
     return Serial.write(data, len);
   }
 }
 
-// Fires when the connection is established or torn down
 void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 {
   struct netif *pppif = ppp_netif(pcb);
   LWIP_UNUSED_ARG(ctx);
-
   switch (err_code)
   {
   case PPPERR_NONE: // No error == connected successfully

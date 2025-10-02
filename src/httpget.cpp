@@ -1,16 +1,12 @@
 #include <Arduino.h>
-#include "globals.h" // Ensure this file defines cmd, tcpClient, and other required globals
+#include "globals.h"
 
 void handleHTTPRequest()
 {
-
-  // From the URL, acquire required variables
-  // (12 = "ATGEThttp://")
   int portIndex = cmd.indexOf(":", 12); // Index where port number might begin
   int pathIndex = cmd.indexOf("/", 12); // Index first host name and possible port ends and path begins
   int port;
   String path, host;
-
   if (pathIndex < 0)
   {
     pathIndex = cmd.length();
@@ -30,10 +26,8 @@ void handleHTTPRequest()
     path = "/";
   char *hostChr = new char[host.length() + 1];
   host.toCharArray(hostChr, host.length() + 1);
-
   Serial.println("Starting file transfer reception...");
   delay(5000);
-
   // Establish connection
   if (!tcpClient.connect(hostChr, port))
   {
@@ -49,8 +43,6 @@ void handleHTTPRequest()
     cmdMode = false;
     callConnected = true;
     setCarrierDCDPin(callConnected);
-
-    // Send a HTTP request before continuing the connection as usual
     String request = "GET ";
     request += path;
     request += " HTTP/1.1\r\nHost: ";

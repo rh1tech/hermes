@@ -1,7 +1,48 @@
 #include <Arduino.h>
 #include "globals.h"
 
-void updateLed();
+namespace
+{
+  const uint8_t MAX_CONNECT_ATTEMPTS = 20;
+  const uint16_t CONNECT_RETRY_DELAY_MS = 500;
+
+  const char *wifiStatusToString(wl_status_t st)
+  {
+    switch (st)
+    {
+    case WL_IDLE_STATUS:
+      return "OFFLINE";
+    case WL_NO_SSID_AVAIL:
+      return "SSID UNAVAILABLE";
+    case WL_SCAN_COMPLETED:
+      return "SCAN COMPLETED";
+    case WL_CONNECTED:
+      return "CONNECTED";
+    case WL_CONNECT_FAILED:
+      return "CONNECT FAILED";
+    case WL_CONNECTION_LOST:
+      return "CONNECTION LOST";
+    case WL_DISCONNECTED:
+      return "DISCONNECTED";
+    default:
+      return "UNKNOWN";
+    }
+  }
+
+  void printMac()
+  {
+    byte mac[6];
+    WiFi.macAddress(mac);
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+      if (mac[i] < 0x10)
+        Serial.print('0');
+      Serial.print(mac[i], HEX);
+      if (i < 5)
+        Serial.print(':');
+    }
+  }
+}
 
 void wifiSetup()
 {
@@ -10,186 +51,149 @@ void wifiSetup()
 
   WiFi.mode(WIFI_STA);
 
-  // Doesn't seem to work
-  String hostname = "THEOLDNET";
-  WiFi.setHostname(hostname.c_str());
+  const char *hostname = "PROTEA";
+  WiFi.setHostname(hostname);
 
   connectWiFi();
   sendResult(R_OK);
-  // tcpServer(tcpServerPort); // Cannot start tcpServer inside a function; it must live outside
 
-  digitalWrite(LED_PIN, LOW); // on
-
-  // Why is this necessary?
-  mdns.begin("TheOldNetWiFi", WiFi.localIP());
-}
-
-void updateLed()
-{
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    digitalWrite(LED_PIN, LOW); // on
-  }
-  else
-  {
-    digitalWrite(LED_PIN, HIGH); // off
-  }
+  mdns.begin("ProteaWiFi", WiFi.localIP());
 }
 
 void connectWiFi()
 {
   if (ssid == "" || password == "")
   {
-    Serial.println("CONFIGURE SSID AND PASSWORD. TYPE AT? FOR HELP.");
+    Serial.println("Please set Wi-Fi network SSID and password first. Enter AT? for help.");
     return;
   }
-  WiFi.begin(ssid.c_str(), password.c_str());
-  Serial.print("\nCONNECTING TO SSID ");
-  Serial.print(ssid);
-  uint8_t i = 0;
-  while (WiFi.status() != WL_CONNECTED && i++ < 20)
+
+  if (WiFi.status() == WL_CONNECTED && WiFi.SSID() == ssid)
   {
-    digitalWrite(LED_PIN, LOW);
-    delay(250);
-    digitalWrite(LED_PIN, HIGH);
-    delay(250);
-    Serial.print(".");
+    Serial.println("Already connected.");
+    return;
   }
-  Serial.println();
-  if (i == 21)
+
+  WiFi.disconnect();
+  delay(100);
+  Serial.print("Checking Wi-Fi signal strength (SSID: ");
+  Serial.print(ssid);
+  Serial.println(")...");
+
+  int16_t rssi = 0;
+  bool found = false;
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; ++i)
   {
-    Serial.print("COULD NOT CONNECT TO ");
-    Serial.println(ssid);
-    WiFi.disconnect();
-    updateLed();
+    if (WiFi.SSID(i) == ssid)
+    {
+      rssi = WiFi.RSSI(i);
+      found = true;
+      break;
+    }
+  }
+  WiFi.scanDelete();
+  if (found)
+  {
+    Serial.print("Signal strength (RSSI): ");
+    Serial.print(rssi);
+    Serial.println(" dBm");
   }
   else
   {
-    Serial.print("CONNECTED TO ");
-    Serial.println(WiFi.SSID());
-    Serial.print("IP ADDRESS: ");
-    Serial.println(WiFi.localIP());
-    updateLed();
-    check_for_firmware_update();
+    Serial.println("Signal strength: unknown (SSID not found)");
   }
+
+  Serial.print("\nConnecting to SSID: ");
+  Serial.print(ssid);
+
+  delay(100);
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  uint8_t attempt = 0;
+  while (WiFi.status() != WL_CONNECTED && attempt++ < MAX_CONNECT_ATTEMPTS)
+  {
+    Serial.print('.');
+    delay(CONNECT_RETRY_DELAY_MS);
+    yield();
+  }
+  Serial.println();
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print("Could not connect to ");
+    Serial.print(ssid);
+    Serial.println(". Check SSID, password and signal strength.");
+    WiFi.disconnect();
+    return;
+  }
+
+  Serial.print("Connected to ");
+  Serial.println(WiFi.SSID());
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  check_for_firmware_update();
 }
 
 void disconnectWiFi()
 {
   WiFi.disconnect();
-  updateLed();
 }
 
 void displayNetworkStatus()
 {
-  Serial.print("WIFI STATUS: ");
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println("CONNECTED");
-  }
-  if (WiFi.status() == WL_IDLE_STATUS)
-  {
-    Serial.println("OFFLINE");
-  }
-  if (WiFi.status() == WL_CONNECT_FAILED)
-  {
-    Serial.println("CONNECT FAILED");
-  }
-  if (WiFi.status() == WL_NO_SSID_AVAIL)
-  {
-    Serial.println("SSID UNAVAILABLE");
-  }
-  if (WiFi.status() == WL_CONNECTION_LOST)
-  {
-    Serial.println("CONNECTION LOST");
-  }
-  if (WiFi.status() == WL_DISCONNECTED)
-  {
-    Serial.println("DISCONNECTED");
-  }
-  if (WiFi.status() == WL_SCAN_COMPLETED)
-  {
-    Serial.println("SCAN COMPLETED");
-  }
+  wl_status_t st = WiFi.status();
+  Serial.print("Wi-Fi Status: ");
+  Serial.println(wifiStatusToString(st));
   yield();
 
-  Serial.print("SSID.......: ");
+  Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
-
-  //  Serial.print("ENCRYPTION: ");
-  //  switch(WiFi.encryptionType()) {
-  //    case 2:
-  //      Serial.println("TKIP (WPA)");
-  //      break;
-  //    case 5:
-  //      Serial.println("WEP");
-  //      break;
-  //    case 4:
-  //      Serial.println("CCMP (WPA)");
-  //      break;
-  //    case 7:
-  //      Serial.println("NONE");
-  //      break;
-  //    case 8:
-  //      Serial.println("AUTO");
-  //      break;
-  //    default:
-  //      Serial.println("UNKNOWN");
-  //      break;
-  //  }
-
-  byte mac[6];
-  WiFi.macAddress(mac);
-  Serial.print("MAC ADDRESS: ");
-  Serial.print(mac[0], HEX);
-  Serial.print(":");
-  Serial.print(mac[1], HEX);
-  Serial.print(":");
-  Serial.print(mac[2], HEX);
-  Serial.print(":");
-  Serial.print(mac[3], HEX);
-  Serial.print(":");
-  Serial.print(mac[4], HEX);
-  Serial.print(":");
-  Serial.println(mac[5], HEX);
+  Serial.print("MAC Address: ");
+  printMac();
+  Serial.println();
   yield();
 
-  Serial.print("IP ADDRESS.: ");
+  Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   yield();
-  Serial.print("GATEWAY....: ");
+
+  Serial.print("Gateway: ");
   Serial.println(WiFi.gatewayIP());
   yield();
-  Serial.print("SUBNET MASK: ");
+
+  Serial.print("Subnet Mask: ");
   Serial.println(WiFi.subnetMask());
   yield();
-  Serial.print("SERVER PORT: ");
+
+  Serial.print("Server Port: ");
   Serial.println(tcpServerPort);
   yield();
-  Serial.print("WEB CONFIG.: HTTP://");
+
+  Serial.print("URL: http://");
   Serial.println(WiFi.localIP());
   yield();
-  Serial.print("CALL STATUS: ");
-  yield();
+
+  Serial.print("Call Status: ");
   if (callConnected)
   {
     if (ppp)
     {
-      Serial.print("CONNECTED TO PPP");
-      yield();
+      Serial.print("Connected to PPP");
     }
     else
     {
-      Serial.print("CONNECTED TO ");
+      Serial.print("Connected to ");
       Serial.println(ipToString(tcpClient.remoteIP()));
-      yield();
     }
-    Serial.print("CALL LENGTH: ");
-    Serial.println(connectTimeString());
     yield();
+    Serial.print("Call length: ");
+    Serial.println(connectTimeString());
   }
   else
   {
-    Serial.println("NOT CONNECTED");
+    Serial.println("Not connected");
   }
+  yield();
 }

@@ -3,8 +3,6 @@
 
 void handleGopherRequest()
 {
-  // From the URL, acquire required variables
-  // (14 = "ATGPHgopher://")
   int portIndex = cmd.indexOf(":", 14); // Index where port number might begin
   int pathIndex = cmd.indexOf("/", 14); // Index first host name and possible port ends and path begins
   int port;
@@ -28,8 +26,6 @@ void handleGopherRequest()
     path = "/";
   char *hostChr = new char[host.length() + 1];
   host.toCharArray(hostChr, host.length() + 1);
-
-  // Establish connection
   if (!tcpClient.connect(hostChr, port))
   {
     sendResult(R_NOCARRIER);
