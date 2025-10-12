@@ -43,7 +43,8 @@
         "VERSIONA",
         "VERSIONB",
         "WIFIPASSWORD",
-        "WIFISSID"
+        "WIFISSID",
+        "xmodem"
     ]
     
 }
