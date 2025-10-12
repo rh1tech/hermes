@@ -106,11 +106,13 @@ void sendResult(int resultCode)
     Serial.print("\r\n");
     if (quietMode)
         return;
+
     if (!verboseResults)
     {
         Serial.println(resultCode);
         return;
     }
+
     String resultMessage;
     switch (resultCode)
     {
@@ -124,7 +126,34 @@ void sendResult(int resultCode)
         resultMessage = String(resultCodes[resultCode]);
         break;
     }
+
+    const char *colorStart = "\x1b[0m";
+    switch (resultCode)
+    {
+    case R_OK:
+    case R_CONNECT:
+        colorStart = "\x1b[30;42m"; // black on green
+        break;
+    case R_RING:
+    case R_NOCARRIER:
+    case R_NODIALTONE:
+    case R_BUSY:
+    case R_NOANSWER:
+        colorStart = "\x1b[30;43m"; // black on yellow
+        break;
+    case R_ERROR:
+        colorStart = "\x1b[37;41m"; // white on red
+        break;
+    default:
+        colorStart = "\x1b[0m";
+        break;
+    }
+
+    Serial.print(colorStart);
+    Serial.print(" ");
     Serial.print(resultMessage);
+    Serial.print(" ");
+    Serial.print("\x1b[0m");
     Serial.print("\r\n");
 }
 
@@ -151,10 +180,13 @@ void waitForSpace()
 
 void welcome()
 {
-    Serial.println("Protea: Serial Terminal Emulator");
-    Serial.println("ESP8266 Firmware (Hermes), version: " + hermes_version + "");
-    Serial.println("Documentation and updates: https://rh1.tech");
-    Serial.println("(C) 2025 Mikhail Matveev. Licensed under GPLv3");
+    Serial.println("\016lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
+    Serial.println("\016x\017\033[44;30m\xB2\xB1\xB0\033[44;1;37m        PROTEA: SERIAL TERMINAL EMULATOR         \033[0;44;30m\xB0\xB1\xB2\033[0m\016x");
+    Serial.println("\016tqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqu");
+    Serial.println("\016x\017 ESP8266 Firmware (Hermes) version \x1b[32m" + hermes_version + "\x1b[0m                \016x");
+    Serial.println("\016x\017 Documentation and updates: \x1b[36mhttps://rh1.tech\x1b[0m           \016x");
+    Serial.println("\016x\017 (C) 2025 Mikhail Matveev, GPL Version 3 License       \016x");
+    Serial.println("\016mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj\017");    
     Serial.println();
 }
 

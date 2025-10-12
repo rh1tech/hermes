@@ -3,7 +3,7 @@
 
 namespace
 {
-  const uint8_t MAX_CONNECT_ATTEMPTS = 20;
+  const uint8_t MAX_CONNECT_ATTEMPTS = 25;
   const uint16_t CONNECT_RETRY_DELAY_MS = 500;
 
   const char *wifiStatusToString(wl_status_t st)

@@ -267,7 +267,7 @@ export default class {
                     if (!res.ok) {
                         throw new Error(`HTTP error ${res.status}`);
                     }
-                    this.showNotification("Device is rebooting", "alert-warning");
+                    this.showNotification("Device is rebooting");
                 } catch {
                     this.showNotification("Could not restart", "alert-danger");
                 } finally {
@@ -283,7 +283,7 @@ export default class {
                     if (!res.ok) {
                         throw new Error(`HTTP error ${res.status}`);
                     }
-                    this.showNotification("Device is updating", "alert-warning");
+                    this.showNotification("Device is updating");
                 } catch {
                     this.showNotification("Could not update", "alert-danger");
                 } finally {
@@ -299,7 +299,7 @@ export default class {
                     if (!res.ok) {
                         throw new Error(`HTTP error ${res.status}`);
                     }
-                    this.showNotification("Settings are saved", "alert-warning");
+                    this.showNotification("Settings are saved");
                 } catch {
                     this.showNotification("Could not save settings", "alert-danger");
                 } finally {
@@ -315,7 +315,7 @@ export default class {
                     if (!res.ok) {
                         throw new Error(`HTTP error ${res.status}`);
                     }
-                    this.showNotification("Settings are loaded", "alert-warning");
+                    this.showNotification("Settings are loaded");
                 } catch {
                     this.showNotification("Could not load settings", "alert-danger");
                 } finally {
