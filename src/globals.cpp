@@ -77,6 +77,7 @@ String cmd = "";            // Gather a new AT command to this string from seria
 bool cmdMode = true;        // Are we in AT command mode or connected mode
 bool callConnected = false; // Are we currently in a call
 bool telnet = false;        // Is telnet control code handling enabled
+bool sshConnected = false; // Are we currently in a SSH session
 bool verboseResults = false;
 bool firmwareUpdating = false;
 int tcpServerPort = LISTEN_PORT;
@@ -116,11 +117,11 @@ void sendResult(int resultCode)
     String resultMessage;
     switch (resultCode)
     {
-    case R_CONNECT:
-        resultMessage = String(resultCodes[R_CONNECT]) + " " + String(bauds[serialspeed]);
+    case RES_CONNECT:
+        resultMessage = String(resultCodes[RES_CONNECT]) + " " + String(bauds[serialspeed]);
         break;
-    case R_NOCARRIER:
-        resultMessage = String(resultCodes[R_NOCARRIER]) + " (" + connectTimeString() + ")";
+    case RES_NOCARRIER:
+        resultMessage = String(resultCodes[RES_NOCARRIER]) + " (" + connectTimeString() + ")";
         break;
     default:
         resultMessage = String(resultCodes[resultCode]);
@@ -130,18 +131,18 @@ void sendResult(int resultCode)
     const char *colorStart = "\x1b[0m";
     switch (resultCode)
     {
-    case R_OK:
-    case R_CONNECT:
+    case RES_OK:
+    case RES_CONNECT:
         colorStart = "\x1b[30;42m"; // black on green
         break;
-    case R_RING:
-    case R_NOCARRIER:
-    case R_NODIALTONE:
-    case R_BUSY:
-    case R_NOANSWER:
+    case RES_RING:
+    case RES_NOCARRIER:
+    case RES_NODIALTONE:
+    case RES_BUSY:
+    case RES_NOANSWER:
         colorStart = "\x1b[30;43m"; // black on yellow
         break;
-    case R_ERROR:
+    case RES_ERROR:
         colorStart = "\x1b[37;41m"; // white on red
         break;
     default:
@@ -216,7 +217,7 @@ void hangUp()
     }
     callConnected = false;
     setCarrierDCDPin(callConnected);
-    sendResult(R_NOCARRIER);
+    sendResult(RES_NOCARRIER);
     connectTime = 0;
 }
 
@@ -224,7 +225,7 @@ void answerCall()
 {
     tcpClient = tcpServer.accept();
     tcpClient.setNoDelay(true); // try to disable naggle
-    sendResult(R_CONNECT);
+    sendResult(RES_CONNECT);
     connectTime = millis();
     cmdMode = false;
     callConnected = true;
@@ -253,7 +254,7 @@ void handleIncomingConnection()
         if (millis() - lastRingMs > 6000 || lastRingMs == 0)
         {
             lastRingMs = millis();
-            sendResult(R_RING);
+            sendResult(RES_RING);
             ringCount++;
         }
         return;
@@ -266,7 +267,7 @@ void handleIncomingConnection()
             sendString(String("RING ") + ipToString(tcpClient.remoteIP()));
         }
         delay(1000);
-        sendResult(R_CONNECT);
+        sendResult(RES_CONNECT);
         connectTime = millis();
         cmdMode = false;
         tcpClient.flush();
@@ -326,7 +327,7 @@ void restoreCommandModeIfDisconnected()
     if ((!tcpClient.connected() && ppp == NULL) && (cmdMode == false) && callConnected == true)
     {
         cmdMode = true;
-        sendResult(R_NOCARRIER);
+        sendResult(RES_NOCARRIER);
         connectTime = 0;
         callConnected = false;
         setCarrierDCDPin(callConnected);

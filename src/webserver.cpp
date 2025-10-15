@@ -101,7 +101,7 @@ void handleFactoryDefaults()
   delay(500);
   defaultEEPROM();
   readSettings();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleGetSettings()

@@ -20,7 +20,7 @@ void setBaudRate(int inSpeed)
 {
   if (inSpeed == 0)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   int foundBaud = -1;
@@ -34,12 +34,12 @@ void setBaudRate(int inSpeed)
   }
   if (foundBaud == -1)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   if (foundBaud == serialspeed)
   {
-    sendResult(R_OK);
+    sendResult(RES_OK);
     return;
   }
   Serial.print("Switching serial port to ");
@@ -51,5 +51,5 @@ void setBaudRate(int inSpeed)
   Serial.begin(bauds[foundBaud]);
   serialspeed = foundBaud;
   delay(200);
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }

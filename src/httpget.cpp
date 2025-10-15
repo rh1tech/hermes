@@ -31,14 +31,14 @@ void handleHTTPRequest()
   // Establish connection
   if (!tcpClient.connect(hostChr, port))
   {
-    sendResult(R_NOCARRIER);
+    sendResult(RES_NOCARRIER);
     connectTime = 0;
     callConnected = false;
     setCarrierDCDPin(callConnected);
   }
   else
   {
-    sendResult(R_CONNECT);
+    sendResult(RES_CONNECT);
     connectTime = millis();
     cmdMode = false;
     callConnected = true;

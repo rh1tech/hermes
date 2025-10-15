@@ -211,7 +211,7 @@ void handleEscapeSequence()
     if (millis() - plusTime > 1000)
     {
       cmdMode = true;
-      sendResult(R_OK);
+      sendResult(RES_OK);
       plusCount = 0;
     }
   }

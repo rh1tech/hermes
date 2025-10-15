@@ -67,15 +67,15 @@
 #pragma once
 enum resultCodes_t
 {
-    R_OK,
-    R_CONNECT,
-    R_RING,
-    R_NOCARRIER,
-    R_ERROR,
-    R_NONE,
-    R_NODIALTONE,
-    R_BUSY,
-    R_NOANSWER
+    RES_OK,
+    RES_CONNECT,
+    RES_RING,
+    RES_NOCARRIER,
+    RES_ERROR,
+    RES_NONE,
+    RES_NODIALTONE,
+    RES_BUSY,
+    RES_NOANSWER
 };
 
 #pragma once
@@ -167,6 +167,7 @@ extern String hermes_version_url;
 extern String cmd;
 extern bool cmdMode;
 extern bool callConnected;
+extern bool sshConnected;
 extern bool telnet;
 extern bool verboseResults;
 extern bool firmwareUpdating;

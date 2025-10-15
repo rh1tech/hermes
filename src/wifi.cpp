@@ -55,7 +55,7 @@ void wifiSetup()
   WiFi.setHostname(hostname);
 
   connectWiFi();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 
   mdns.begin("ProteaWiFi", WiFi.localIP());
 }
