@@ -10,9 +10,13 @@
 #include <Arduino.h>
 #include "globals.h"
 
+void restoreCommandModeIfDisconnected();
+
 void setup()
 {
-  ip_napt_init(IP_NAPT_MAX, IP_PORTMAP_MAX);
+  #if NAPT_SUPPORTED
+    ip_napt_init(IP_NAPT_MAX, IP_PORTMAP_MAX);
+  #endif
   EEPROM.begin(LAST_ADDRESS + 1);
   delay(10);
   readSettings();

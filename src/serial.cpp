@@ -1,14 +1,29 @@
 #include <Arduino.h>
 #include "globals.h"
 
+#ifdef ESP32
+  #include <EEPROM.h>
+  #define EEPROM_SIZE 512  // Adjust size as needed
+#elif defined(ESP8266)
+  #include <EEPROM.h>
+#endif
+
 void serialSetup()
 {
-  pinMode(CTS_PIN, OUTPUT); // This was set to input, but the diagrams I reviewed indicate a modem's CTS pin is output
-  digitalWrite(CTS_PIN, HIGH); // Pull up the CTS pin
+  #ifdef ESP32
+    EEPROM.begin(EEPROM_SIZE);
+  #elif defined(ESP8266)
+    EEPROM.begin(512);
+  #endif
+
+  pinMode(CTS_PIN, OUTPUT);
+  digitalWrite(CTS_PIN, HIGH);
   setCarrierDCDPin(false);
+  
   // Fetch baud rate from EEPROM
   serialspeed = EEPROM.read(BAUD_ADDRESS);
-  // Check if it's out of bounds -- we must ensure communication is possible
+  
+  // Check if it's out of bounds
   if (serialspeed < 0 || serialspeed > sizeof(bauds) / sizeof(bauds[0]))
   {
     serialspeed = 0;
@@ -20,7 +35,7 @@ void setBaudRate(int inSpeed)
 {
   if (inSpeed == 0)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   int foundBaud = -1;
@@ -34,12 +49,12 @@ void setBaudRate(int inSpeed)
   }
   if (foundBaud == -1)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   if (foundBaud == serialspeed)
   {
-    sendResult(R_OK);
+    sendResult(RES_OK);
     return;
   }
   Serial.print("Switching serial port to ");
@@ -51,5 +66,5 @@ void setBaudRate(int inSpeed)
   Serial.begin(bauds[foundBaud]);
   serialspeed = foundBaud;
   delay(200);
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }

@@ -1,5 +1,15 @@
-#include <Arduino.h>
+#ifndef WEBSRV_H
+#define WEBSRV_H
+
 #include "globals.h"
+#ifdef ESP32
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#endif
 
 const char MAIN_page[] PROGMEM = R"=====(
 <!doctype html>
@@ -13,3 +23,5 @@ const char MAIN_page[] PROGMEM = R"=====(
     </body>
 </html>
 )=====";
+
+#endif // WEBSRV_H

@@ -1,4 +1,20 @@
 #include <Arduino.h>
+
+#ifdef ESP32
+// ESP32-specific includes for PPP
+#include "netif/ppp/pppos.h"
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+#include "lwip/prot/ip4.h"
+#endif
+
+#ifdef ESP8266
+// ESP8266-specific includes if needed
+// Note: PPP functionality may not be available on ESP8266
+#endif
 #include <globals.h>
 
 // ========================= Utility Functions =========================
@@ -36,6 +52,7 @@ struct ATCommand
 // Forward declarations
 void handleAT(const String &, const String &);
 void handleDial(const String &, const String &);
+void handleSSHConnect(const String &, const String &);
 void handleTelnetMode(const String &, const String &);
 void handleAnswer(const String &, const String &);
 void handleHelp(const String &, const String &);
@@ -74,28 +91,28 @@ static void handleBinaryParameter(const String &up, const String &prefix, bool &
 {
   if (up.length() < prefix.length() + 1)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   String p = up.substring(prefix.length(), prefix.length() + 1);
   if (p == "?")
   {
     sendString(String(variable ? 1 : 0));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else if (p == "0")
   {
     variable = false;
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else if (p == "1")
   {
     variable = true;
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
   }
 }
 
@@ -105,13 +122,37 @@ void handleQuietMode(String upCmd)
   handleBinaryParameter(upCmd, "ATQ", quietMode);
 }
 
+// ========================== Connect to SSH ===========================
+
+void connectSSH(String upCmd)
+{
+  String host, port;
+  int portIndex = upCmd.indexOf(":");
+  if (portIndex != -1)
+  {
+    host = upCmd.substring(5, portIndex);
+    port = upCmd.substring(portIndex + 1, upCmd.length());
+  }
+  else
+  {
+    host = upCmd.substring(5, upCmd.length());
+    port = "22";
+  }
+  host.trim();
+  port.trim();
+  Serial.print("Dialing ");
+  Serial.print(host);
+  Serial.print(":");
+  Serial.println(port);
+}
+
 // ========================= Dial Out Function =========================
 
 void dialOut(String upCmd)
 {
   if (callConnected)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
 
@@ -150,12 +191,13 @@ void dialOut(String upCmd)
   host.trim();
   port.trim();
 
+#ifdef ESP8266
   if (host.equals("PPP") || host.equals("777"))
   {
     if (ppp)
     {
       Serial.println("PPP already active");
-      sendResult(R_ERROR);
+      sendResult(RES_ERROR);
       return;
     }
     ppp = pppos_create(&ppp_netif, ppp_output_cb, ppp_status_cb, NULL);
@@ -173,7 +215,7 @@ void dialOut(String upCmd)
     ppp_err = ppp_listen(ppp);
     if (ppp_err == PPPERR_NONE)
     {
-      sendResult(R_CONNECT);
+      sendResult(RES_CONNECT);
       connectTime = millis();
       cmdMode = false;
       callConnected = true;
@@ -184,10 +226,11 @@ void dialOut(String upCmd)
       Serial.println("ppp_listen failed\n");
       ppp_status_cb(ppp, ppp_err, NULL);
       ppp_close(ppp, 1);
-      sendResult(R_ERROR);
+      sendResult(RES_ERROR);
     }
     return;
   }
+#endif
 
   Serial.print("Dialing ");
   Serial.print(host);
@@ -200,7 +243,7 @@ void dialOut(String upCmd)
   if (tcpClient.connect(hostChr, portInt))
   {
     tcpClient.setNoDelay(true); // Try to disable naggle
-    sendResult(R_CONNECT);
+    sendResult(RES_CONNECT);
     connectTime = millis();
     cmdMode = false;
     Serial.flush();
@@ -209,11 +252,11 @@ void dialOut(String upCmd)
   }
   else
   {
-    sendResult(R_NOANSWER);
+    sendResult(RES_NOANSWER);
     callConnected = false;
     setCarrierDCDPin(callConnected);
   }
-  delete hostChr;
+  delete[] hostChr;
 }
 
 // ========================= Command Table =========================
@@ -251,6 +294,7 @@ static const ATCommand atCommands[] = {
 
     // Prefix matches
     {"ATDT", handleDial, false},
+    {"ATSSH", handleSSHConnect, false},
     {"ATDP", handleDial, false},
     {"ATDI", handleDial, false},
     {"ATDS", handleDial, false},
@@ -314,7 +358,7 @@ void command()
 
   // Unknown command
   Serial.print("Unknown command. Type AT? for help.");
-  sendResult(R_ERROR);
+  sendResult(RES_ERROR);
   cmd = "";
 }
 
@@ -322,12 +366,17 @@ void command()
 
 void handleAT(const String &, const String &)
 {
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleDial(const String &up, const String &)
 {
   dialOut(up);
+}
+
+void handleSSHConnect(const String &up, const String &)
+{
+  connectSSH(up);
 }
 
 void handleTelnetMode(const String &up, const String &)
@@ -344,7 +393,7 @@ void handleTelnetMode(const String &up, const String &)
   { // ATNET?
     Serial.println(String(telnet));
   }
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleAnswer(const String &, const String &)
@@ -355,20 +404,20 @@ void handleAnswer(const String &, const String &)
   }
   else
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
   }
 }
 
 void handleHelp(const String &, const String &)
 {
   displayHelp();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleReset(const String &, const String &)
 {
   readSettings();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleWiFiConnection(const String &up, const String &)
@@ -381,7 +430,7 @@ void handleWiFiConnection(const String &up, const String &)
   {
     connectWiFi();
   }
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleEcho(const String &up, const String &)
@@ -398,30 +447,30 @@ void handlePinPolarity(const String &up, const String &)
 {
   if (up.length() < 5)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   String p = up.substring(4, 5);
   if (p == "?")
   {
     sendString(String(pinPolarity));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else if (p == "0")
   {
     pinPolarity = P_INVERTED;
-    sendResult(R_OK);
+    sendResult(RES_OK);
     setCarrierDCDPin(callConnected);
   }
   else if (p == "1")
   {
     pinPolarity = P_NORMAL;
-    sendResult(R_OK);
+    sendResult(RES_OK);
     setCarrierDCDPin(callConnected);
   }
   else
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
   }
 }
 
@@ -429,14 +478,14 @@ void handleFlowControl(const String &up, const String &)
 {
   if (up.length() < 5)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   String p = up.substring(4, 5);
   if (p == "?")
   {
     sendString(String(flowControl));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
@@ -444,11 +493,11 @@ void handleFlowControl(const String &up, const String &)
     if (v >= 0 && v <= 2)
     {
       flowControl = v;
-      sendResult(R_OK);
+      sendResult(RES_OK);
     }
     else
     {
-      sendResult(R_ERROR);
+      sendResult(RES_ERROR);
     }
   }
 }
@@ -462,7 +511,7 @@ void handleBaudRate(const String &up, const String &)
   else
   {
     sendString(String(bauds[serialspeed]));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
@@ -471,19 +520,19 @@ void handleBusyMessage(const String &up, const String &raw)
   if (up.startsWith("AT$BM="))
   {
     busyMsg = raw.substring(6); // preserve case
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
     sendString(busyMsg);
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
 void handleNetworkInfo(const String &, const String &)
 {
   displayNetworkStatus();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleProfileView(const String &, const String &)
@@ -491,13 +540,13 @@ void handleProfileView(const String &, const String &)
   displayCurrentSettings();
   waitForSpace();
   displayStoredSettings();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleProfileWrite(const String &, const String &)
 {
   writeSettings();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleFirmwareUpdate(const String &, const String &)
@@ -509,13 +558,13 @@ void handleSpeedDial(const String &up, const String &raw)
 {
   if (up.length() < 5)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
   byte speedNum = up.substring(4, 5).toInt();
   if (speedNum > 9)
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
     return;
   }
 
@@ -525,21 +574,21 @@ void handleSpeedDial(const String &up, const String &raw)
     if (op == "=")
     {
       storeSpeedDial(speedNum, raw.substring(6)); // preserve case
-      sendResult(R_OK);
+      sendResult(RES_OK);
     }
     else if (op == "?")
     {
       sendString(speedDials[speedNum]);
-      sendResult(R_OK);
+      sendResult(RES_OK);
     }
     else
     {
-      sendResult(R_ERROR);
+      sendResult(RES_ERROR);
     }
   }
   else
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
   }
 }
 
@@ -548,12 +597,12 @@ void handleSSID(const String &up, const String &raw)
   if (up.startsWith("AT$SSID="))
   {
     ssid = raw.substring(8); // preserve case
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
     sendString(ssid);
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
@@ -562,12 +611,12 @@ void handlePassword(const String &up, const String &raw)
   if (up.startsWith("AT$PASS="))
   {
     password = raw.substring(8); // preserve case
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
     sendString(password);
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
@@ -575,7 +624,7 @@ void handleFactoryReset(const String &, const String &)
 {
   defaultEEPROM();
   readSettings();
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleAutoAnswer(const String &up, const String &)
@@ -583,17 +632,17 @@ void handleAutoAnswer(const String &up, const String &)
   if (up == "ATS0=0")
   {
     autoAnswer = false;
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else if (up == "ATS0=1")
   {
     autoAnswer = true;
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   { // ATS0?
     sendString(String(autoAnswer));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
@@ -607,7 +656,7 @@ void handleHexTranslate(const String &up, const String &)
   {
     hex = false;
   }
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleHangup(const String &, const String &)
@@ -617,22 +666,22 @@ void handleHangup(const String &, const String &)
 
 void handleReboot(const String &, const String &)
 {
-  sendResult(R_OK);
+  sendResult(RES_OK);
   Serial.flush();
   delay(500);
-  ESP.reset();
+  ESP.restart();
 }
 
 void handleOnline(const String &, const String &)
 {
   if (callConnected == 1)
   {
-    sendResult(R_CONNECT);
+    sendResult(RES_CONNECT);
     cmdMode = false;
   }
   else
   {
-    sendResult(R_ERROR);
+    sendResult(RES_ERROR);
   }
 }
 
@@ -643,7 +692,7 @@ void handleWiFiScan(const String &, const String &)
   if (n <= 0)
   {
     sendString("No networks found");
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
@@ -653,14 +702,18 @@ void handleWiFiScan(const String &, const String &)
     {
       String line = String(i) + ": " + WiFi.SSID(i) + " (" + String(WiFi.RSSI(i)) + "dBm)";
       uint8_t enc = WiFi.encryptionType(i);
+#ifdef ESP32
+      if (enc != WIFI_AUTH_OPEN)
+#else
       if (enc != ENC_TYPE_NONE)
+#endif
         line += " *";
       Serial.println(line);
       printed++;
       if (n > PAGE_SIZE && (printed % PAGE_SIZE == 0) && (i != n - 1))
         waitForSpace();
     }
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   WiFi.scanDelete();
 }
@@ -671,19 +724,19 @@ void handleServerPort(const String &up, const String &)
   {
     tcpServerPort = up.substring(6).toInt();
     sendString("Changes require to run AT&W and restart to take effect");
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
   else
   {
     sendString(String(tcpServerPort));
-    sendResult(R_OK);
+    sendResult(RES_OK);
   }
 }
 
 void handleIPAddress(const String &, const String &)
 {
   Serial.println(WiFi.localIP());
-  sendResult(R_OK);
+  sendResult(RES_OK);
 }
 
 void handleHTTPGet(const String &, const String &)

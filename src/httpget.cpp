@@ -1,3 +1,8 @@
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+  #include <WiFi.h>
+#endif
 #include <Arduino.h>
 #include "globals.h"
 
@@ -31,14 +36,14 @@ void handleHTTPRequest()
   // Establish connection
   if (!tcpClient.connect(hostChr, port))
   {
-    sendResult(R_NOCARRIER);
+    sendResult(RES_NOCARRIER);
     connectTime = 0;
     callConnected = false;
     setCarrierDCDPin(callConnected);
   }
   else
   {
-    sendResult(R_CONNECT);
+    sendResult(RES_CONNECT);
     connectTime = millis();
     cmdMode = false;
     callConnected = true;

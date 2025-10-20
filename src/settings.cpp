@@ -1,4 +1,13 @@
 #include <Arduino.h>
+
+#ifdef ESP32
+  #include <EEPROM.h>
+  #define EEPROM_SIZE 512
+#elif defined(ESP8266)
+  #include <EEPROM.h>
+#else
+  #error "Unsupported platform. Please define ESP32 or ESP8266"
+#endif
 #include "globals.h"
 #include <EEPROM.h>
 
