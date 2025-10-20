@@ -15,8 +15,6 @@
 #elif defined(ESP32)
     #include <WiFi.h>
     #include <ESPmDNS.h>
-    // Note: ESP32 standard Arduino framework doesn't include NAPT/PPP
-    // If needed, use esp-idf or a custom build
 #endif
 
 #include <IPAddress.h>
