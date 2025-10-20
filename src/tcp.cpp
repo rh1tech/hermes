@@ -1,4 +1,11 @@
-#include <Arduino.h>
+#if defined(ESP32)
+  #include <Arduino.h>
+#elif defined(ESP8266)
+  #include <Arduino.h>
+  #include <ESP8266WiFi.h>
+#else
+  #include <Arduino.h>
+#endif
 #include <cstring>
 #include "globals.h"
 #include "xmodem.h"
@@ -64,15 +71,19 @@ void terminalToTcp()
       }
     }
   }
-
+  #ifdef PPP_ENABLED
   if (ppp)
   {
-    pppos_input(ppp, txBuf, len);
+      pppos_input(ppp, txBuf, len);
   }
   else
   {
     tcpClient.write(txBuf, len);
   }
+  #endif
+  #ifndef PPP_ENABLED
+  tcpClient.write(txBuf, len);
+  #endif
 
   yield();
 }

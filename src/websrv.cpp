@@ -1,13 +1,27 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "globals.h"
+#include "websrv.h"
+
+#ifdef ESP32
+#include <WebServer.h>
+#include <Update.h>
+#else // ESP8266
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
+#endif
 
+#ifdef ESP32
+WebServer webServer(80);
+// Note: ESP32 core libraries do not include a direct equivalent of ESP8266HTTPUpdateServer.
+// Firmware updates on ESP32 are typically handled with a custom handler using the Update library.
+// The setup for httpUpdater is omitted for ESP32 in this refactoring.
+#else // ESP8266
 ESP8266HTTPUpdateServer httpUpdater;
 ESP8266WebServer webServer(80);
+#endif
 
-#include "webserver.h"
+#include "websrv.h"
 
 void handleLoadEEPROM();
 void handleSaveEEPROM();
@@ -188,7 +202,12 @@ String getCallStatus()
 {
   if (callConnected)
   {
+    #ifdef PPP_ENABLED
     return "CONNECTED TO " + String(ppp ? "PPP" : ipToString(tcpClient.remoteIP()));
+    #endif
+    #ifndef PPP_ENABLED
+    return "CONNECTED TO " + String(ipToString(tcpClient.remoteIP()));
+    #endif
   }
   return "NOT CONNECTED";
 }

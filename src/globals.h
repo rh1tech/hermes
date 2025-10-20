@@ -1,13 +1,26 @@
 #include <Arduino.h>
-#include <lwip/napt.h>
-#include <lwip/dns.h>
-#include <lwip/netif.h>
-#include <netif/ppp/ppp.h>
-#include <netif/ppp/pppos.h>
+
+// #ifndef ESP8266
+// #define ESP8266
+// #endif
+
+#ifdef ESP8266
+    #include <lwip/napt.h>
+    #include <lwip/dns.h>
+    #include <lwip/netif.h>
+    #include <netif/ppp/ppp.h>
+    #include <netif/ppp/pppos.h>
+    #include <ESP8266WiFi.h>
+    #include <ESP8266mDNS.h>
+#elif defined(ESP32)
+    #include <WiFi.h>
+    #include <ESPmDNS.h>
+    // Note: ESP32 standard Arduino framework doesn't include NAPT/PPP
+    // If needed, use esp-idf or a custom build
+#endif
+
 #include <IPAddress.h>
-#include <ESP8266WiFi.h>
 #include <EEPROM.h>
-#include <ESP8266mDNS.h>
 
 #define VERSIONA 0
 #define VERSIONB 2
@@ -104,8 +117,10 @@ void handleWebServer();
 void handleConnectedMode();
 void sendResult(int resultCode);
 void setCarrierDCDPin(byte carrier);
+#ifdef ESP8266
 u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx);
 void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx);
+#endif
 void sendString(String msg);
 void hangUp();
 void answerCall();
@@ -152,12 +167,15 @@ void answerCall();
 void handleIncomingConnection();
 void handleFlowControl();
 void handleCommandMode();
-void restoreCommandModeIfDisconnected();
-
 extern WiFiServer tcpServer;
 extern WiFiClient tcpClient;
 extern MDNSResponder mdns;
+#ifdef ESP8266
+#define PPP_ENABLED
 extern ppp_pcb *ppp;
+extern struct netif ppp_netif;
+#endif
+extern String speedDials[10];
 extern struct netif ppp_netif;
 extern String speedDials[10];
 extern String ssid, password, busyMsg;

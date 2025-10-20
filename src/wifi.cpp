@@ -1,4 +1,14 @@
 #include <Arduino.h>
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#elif ESP32
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#else
+#error "Unsupported platform"
+#endif
 #include "globals.h"
 
 namespace
@@ -57,14 +67,26 @@ void wifiSetup()
   connectWiFi();
   sendResult(RES_OK);
 
+#ifdef ESP8266
   mdns.begin("ProteaWiFi", WiFi.localIP());
+#elif defined(ESP32)
+  MDNS.begin("ProteaWiFi");
+#endif
 }
 
 void connectWiFi()
 {
-  if (ssid == "" || password == "")
+  if (ssid.isEmpty() || ssid[0] == 0xFF || password.isEmpty())
   {
-    Serial.println("Please set Wi-Fi network SSID and password first. Enter AT? for help.");
+    Serial.println("Welcome to to Hermes, the Protea Wi-Fi to Serial Modem!");
+    Serial.println("Default baud rate is 9600 bps. You can change it using the command: \x1b[36mAT$SB=N\x1b[0m,");
+    Serial.println("where \x1b[36mN\x1b[0m is one of: 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200.");  
+    Serial.println("You need to connect to a Wi-Fi network before making calls.");
+    Serial.println("To do this, set the SSID and password using the following commands:");
+    Serial.println("\x1b[36mAT$SSID=YOUR_WIFI_NETWORK\x1b[0m");
+    Serial.println("\x1b[36mAT$PASS=YOUR_WIFI_PASSWORD\x1b[0m");
+    Serial.println("When done, connect using the command: \x1b[36mATC1\x1b[0m");
+    Serial.println("Enter \x1b[36mAT?\x1b[0m for help. When done, save your settings by entering: \x1b[36mAT&W\x1b[0m");
     return;
   }
 
@@ -178,6 +200,7 @@ void displayNetworkStatus()
   Serial.print("Call Status: ");
   if (callConnected)
   {
+#ifdef PPP_ENABLED
     if (ppp)
     {
       Serial.print("Connected to PPP");
@@ -187,6 +210,11 @@ void displayNetworkStatus()
       Serial.print("Connected to ");
       Serial.println(ipToString(tcpClient.remoteIP()));
     }
+#endif
+#ifndef PPP_ENABLED
+    Serial.print("Connected to ");
+    Serial.println(ipToString(tcpClient.remoteIP()));
+#endif
     yield();
     Serial.print("Call length: ");
     Serial.println(connectTimeString());

@@ -1,6 +1,8 @@
 #include <Arduino.h>
-#include "netif/ppp/ppp.h"
 #include "globals.h"
+
+#ifdef ESP8266
+#include "netif/ppp/ppp.h"
 
 u32_t ppp_output_cb(ppp_pcb *pcb, unsigned char *data, u32_t len, void *ctx)
 {
@@ -44,8 +46,10 @@ void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
     // printf("   our6_ipaddr = %s\n", ip6addr_ntoa(netif_ip6_addr(pppif, 0)));
 #endif /* PPP_IPV6_SUPPORT */
 #endif /* DEBUG */
-    // Enable NAT-ing this connection
+#if NAPT_SUPPORTED
+    // Enable NAT-ing this connection (ESP8266 only)
     ip_napt_enable(pppif->ip_addr.addr, 1);
+#endif
     break;
   case PPPERR_USER: // Clean disconnect
     // sendString(F("PPP: shutdown"));
@@ -102,3 +106,17 @@ void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
     cmdMode = true;
   }
 }
+
+#else // ESP32 or other platforms - stubs only
+
+u32_t ppp_output_cb(void *pcb, unsigned char *data, u32_t len, void *ctx)
+{
+  return 0;
+}
+
+void ppp_status_cb(void *pcb, int err_code, void *ctx)
+{
+  // Stub for ESP32
+}
+
+#endif

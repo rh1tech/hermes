@@ -45,7 +45,13 @@ private:
         WAIT_CHECKSUM
     };
     State state_ = WAIT_HEADER;
-    uint8_t blockBuf_[1024];
+    
+#ifdef ESP8266
+    uint8_t blockBuf_[128];  // Use 128 bytes on ESP8266 to save RAM
+#else
+    uint8_t blockBuf_[1024];  // ESP32 has more RAM
+#endif
+    
     size_t dataIndex_ = 0;
     uint8_t expectedSeq_, seqComp_;
     uint16_t receivedCrc_ = 0;

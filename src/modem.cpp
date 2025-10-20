@@ -1,4 +1,20 @@
 #include <Arduino.h>
+
+#ifdef ESP32
+// ESP32-specific includes for PPP
+#include "netif/ppp/pppos.h"
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+#include "lwip/prot/ip4.h"
+#endif
+
+#ifdef ESP8266
+// ESP8266-specific includes if needed
+// Note: PPP functionality may not be available on ESP8266
+#endif
 #include <globals.h>
 
 // ========================= Utility Functions =========================
@@ -175,6 +191,7 @@ void dialOut(String upCmd)
   host.trim();
   port.trim();
 
+#ifdef ESP8266
   if (host.equals("PPP") || host.equals("777"))
   {
     if (ppp)
@@ -213,6 +230,7 @@ void dialOut(String upCmd)
     }
     return;
   }
+#endif
 
   Serial.print("Dialing ");
   Serial.print(host);
@@ -238,7 +256,7 @@ void dialOut(String upCmd)
     callConnected = false;
     setCarrierDCDPin(callConnected);
   }
-  delete hostChr;
+  delete[] hostChr;
 }
 
 // ========================= Command Table =========================
@@ -651,7 +669,7 @@ void handleReboot(const String &, const String &)
   sendResult(RES_OK);
   Serial.flush();
   delay(500);
-  ESP.reset();
+  ESP.restart();
 }
 
 void handleOnline(const String &, const String &)
@@ -684,7 +702,11 @@ void handleWiFiScan(const String &, const String &)
     {
       String line = String(i) + ": " + WiFi.SSID(i) + " (" + String(WiFi.RSSI(i)) + "dBm)";
       uint8_t enc = WiFi.encryptionType(i);
+#ifdef ESP32
+      if (enc != WIFI_AUTH_OPEN)
+#else
       if (enc != ENC_TYPE_NONE)
+#endif
         line += " *";
       Serial.println(line);
       printed++;

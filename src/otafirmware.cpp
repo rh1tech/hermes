@@ -1,13 +1,23 @@
 #include <Arduino.h>
 #include "globals.h"
 
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 
 ESP8266WiFiMulti WiFiMulti;
+#define UPDATE_CLASS ESPhttpUpdate
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+#include <HTTPUpdate.h>
+
+WiFiMulti WiFiMulti;
+#define UPDATE_CLASS httpUpdate
+#endif
 
 String getLatestVersion()
 {
@@ -72,18 +82,18 @@ void handleOTAFirmware()
   if ((WiFiMulti.run() == WL_CONNECTED))
   {
     WiFiClient client;
-    ESPhttpUpdate.onStart(update_started);
-    ESPhttpUpdate.onEnd(update_finished);
-    ESPhttpUpdate.onProgress(update_progress);
-    ESPhttpUpdate.onError(update_error);
+    UPDATE_CLASS.onStart(update_started);
+    UPDATE_CLASS.onEnd(update_finished);
+    UPDATE_CLASS.onProgress(update_progress);
+    UPDATE_CLASS.onError(update_error);
     String latestVersion = getLatestVersion();
     String modifiedVersion = latestVersion;
     modifiedVersion.replace('.', '_');
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, "http://protea.rh1.tech/ota/hermes_" + modifiedVersion + ".bin");
+    t_httpUpdate_return ret = UPDATE_CLASS.update(client, "http://protea.rh1.tech/ota/hermes_" + modifiedVersion + ".bin");
     switch (ret)
     {
     case HTTP_UPDATE_FAILED:
-      Serial.printf("HTTP_UPDATE_FAILED, error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+      Serial.printf("HTTP_UPDATE_FAILED, error (%d): %s\n", UPDATE_CLASS.getLastError(), UPDATE_CLASS.getLastErrorString().c_str());
       break;
 
     case HTTP_UPDATE_NO_UPDATES:

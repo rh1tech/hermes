@@ -48,7 +48,10 @@
         "xmodem"
     ],
     "files.associations": {
-        "types.h": "c"
+        "types.h": "c",
+        "memory": "cpp",
+        "random": "cpp",
+        "optional": "cpp"
     }
     
 }

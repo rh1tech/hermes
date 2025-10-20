@@ -1,5 +1,11 @@
 #include "xmodem.h"
 
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
+
 XModem::XModem(Client &client, Stream &output, XModemMode mode)
     : client_(client), out_(output), mode_(mode)
 {
