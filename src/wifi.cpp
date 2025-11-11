@@ -56,10 +56,10 @@ namespace
 
 void wifiSetup()
 {
+  WiFi.mode(WIFI_STA);
+
   if (tcpServerPort > 0)
     tcpServer.begin();
-
-  WiFi.mode(WIFI_STA);
 
   const char *hostname = "PROTEA";
   WiFi.setHostname(hostname);

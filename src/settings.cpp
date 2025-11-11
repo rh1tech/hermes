@@ -76,6 +76,15 @@ void defaultEEPROM()
 
 void readSettings()
 {
+  // Check if EEPROM has been initialized with valid version
+  byte verA = EEPROM.read(VERSION_ADDRESS);
+  byte verB = EEPROM.read(VERSION_ADDRESS + 1);
+  
+  // If version doesn't match, initialize EEPROM with defaults
+  if (verA != VERSIONA || verB != VERSIONB) {
+    defaultEEPROM();
+  }
+  
   echo = EEPROM.read(ECHO_ADDRESS);
   autoAnswer = EEPROM.read(AUTO_ANSWER_ADDRESS);
   ssid = getEEPROM(SSID_ADDRESS, SSID_LEN);
