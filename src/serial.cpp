@@ -16,8 +16,10 @@ void serialSetup()
     EEPROM.begin(512);
   #endif
 
-  pinMode(CTS_PIN, OUTPUT);
-  digitalWrite(CTS_PIN, HIGH);
+  // NOTE: CTS_PIN (15) is shared with SD card CS pin
+  // Don't initialize it here to avoid SD card conflicts
+  // pinMode(CTS_PIN, OUTPUT);
+  // digitalWrite(CTS_PIN, HIGH);
   setCarrierDCDPin(false);
   
   // Fetch baud rate from EEPROM

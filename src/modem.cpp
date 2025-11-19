@@ -83,6 +83,9 @@ void handleIPAddress(const String &, const String &);
 void handleHTTPGet(const String &, const String &);
 void handleGopher(const String &, const String &);
 void handleQuiet(const String &, const String &);
+void handleSDInit(const String &, const String &);
+void handleHardReset(const String &, const String &);
+void handleSDSpeed(const String &, const String &);
 
 // ========================= Helper Functions =========================
 
@@ -123,28 +126,7 @@ void handleQuietMode(String upCmd)
 }
 
 // ========================== Connect to SSH ===========================
-
-void connectSSH(String upCmd)
-{
-  String host, port;
-  int portIndex = upCmd.indexOf(":");
-  if (portIndex != -1)
-  {
-    host = upCmd.substring(5, portIndex);
-    port = upCmd.substring(portIndex + 1, upCmd.length());
-  }
-  else
-  {
-    host = upCmd.substring(5, upCmd.length());
-    port = "22";
-  }
-  host.trim();
-  port.trim();
-  Serial.print("Dialing ");
-  Serial.print(host);
-  Serial.print(":");
-  Serial.println(port);
-}
+// SSH implementation moved to ssh.cpp
 
 // ========================= Dial Out Function =========================
 
@@ -291,6 +273,9 @@ static const ATCommand atCommands[] = {
     {"ATIP?", handleIPAddress, true},
     {"AT$SB?", handleBaudRate, true},
     {"AT$BM?", handleBusyMessage, true},
+    {"AT$SDINIT", handleSDInit, true},
+    {"AT$HRESET", handleHardReset, true},
+    {"AT$SDSPEED", handleSDSpeed, true},
 
     // Prefix matches
     {"ATDT", handleDial, false},
@@ -374,9 +359,9 @@ void handleDial(const String &up, const String &)
   dialOut(up);
 }
 
-void handleSSHConnect(const String &up, const String &)
+void handleSSHConnect(const String &up, const String &raw)
 {
-  connectSSH(up);
+  connectSSH(raw);
 }
 
 void handleTelnetMode(const String &up, const String &)
@@ -752,4 +737,51 @@ void handleGopher(const String &, const String &)
 void handleQuiet(const String &up, const String &)
 {
   handleBinaryParameter(up, "ATQ", quietMode);
+}
+
+void handleSDInit(const String &, const String &)
+{
+  manualInitSDCard();
+  sendResult(RES_OK);
+}
+
+void handleHardReset(const String &, const String &)
+{
+  Serial.println();
+  Serial.println("\x1b[37;41m WARNING: HARD RESET \x1b[0m");
+  Serial.println("This will erase ALL settings and reboot the device.");
+  Serial.println("Factory defaults will be restored.");
+  Serial.println();
+  Serial.print("Erasing EEPROM...");
+  Serial.flush();
+  
+  // Clear entire EEPROM
+  for (int i = 0; i < LAST_ADDRESS + 1; i++) {
+    EEPROM.write(i, 0xFF);
+  }
+  EEPROM.commit();
+  
+  Serial.println(" Done");
+  Serial.println("Writing factory defaults...");
+  Serial.flush();
+  
+  // Write factory defaults
+  defaultEEPROM();
+  
+  Serial.println("Settings restored to factory defaults");
+  sendResult(RES_OK);
+  Serial.flush();
+  
+  Serial.println();
+  Serial.println("Rebooting in 3 seconds...");
+  Serial.flush();
+  delay(3000);
+  
+  ESP.restart();
+}
+
+void handleSDSpeed(const String &, const String &)
+{
+  testSDCardSpeed();
+  sendResult(RES_OK);
 }

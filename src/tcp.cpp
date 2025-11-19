@@ -230,6 +230,15 @@ void handleEscapeSequence()
 
 void handleConnectedMode()
 {
+#ifdef ESP32
+  // Use SSH data handler if SSH is connected
+  if (sshConnected)
+  {
+    handleSSHData();
+    return;
+  }
+#endif
+  
   terminalToTcp();
   tcpToTerminal();
   handleEscapeSequence();

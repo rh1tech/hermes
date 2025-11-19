@@ -15,8 +15,6 @@
 #elif defined(ESP32)
     #include <WiFi.h>
     #include <ESPmDNS.h>
-    // Note: ESP32 standard Arduino framework doesn't include NAPT/PPP
-    // If needed, use esp-idf or a custom build
 #endif
 
 #include <IPAddress.h>
@@ -137,12 +135,19 @@ void storeSpeedDial(byte num, String location);
 void defaultEEPROM();
 void handleHTTPRequest();
 void handleGopherRequest();
+void connectSSH(String upCmd);
+void cleanupSSHSession();
+void handleSSHData();
 void welcome();
 void handleFlowControl();
 String ipToString(IPAddress ip);
 void check_for_firmware_update();
 String getWifiStatus();
 void handleGetStatus();
+void initSDCard();
+bool isSDCardAvailable();
+void manualInitSDCard();
+void testSDCardSpeed();
 void redirectToRoot();
 void handleRoot();
 void handleWebHangUp();

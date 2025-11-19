@@ -14,6 +14,28 @@ void restoreCommandModeIfDisconnected();
 
 void setup()
 {
+  // Blink LED on startup (3 times)
+  pinMode(16, OUTPUT);
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(16, HIGH);
+    delay(200);
+    digitalWrite(16, LOW);
+    delay(200);
+  }
+  
+  // CRITICAL: GPIO15 (SD card CS) is a boot mode pin on ESP8266!
+  // GPIO15 must be LOW during boot for the ESP8266 to boot from flash
+  // If SD card holds it HIGH, the ESP8266 won't boot properly
+  
+  // Immediately set pin 15 as OUTPUT and pull LOW to ensure proper boot state
+  pinMode(15, OUTPUT);
+  digitalWrite(15, LOW);
+  delay(10);
+  
+  // Then set it HIGH (CS idle state for SD card)
+  digitalWrite(15, HIGH);
+  delay(50);
+  
   #if NAPT_SUPPORTED
     ip_napt_init(IP_NAPT_MAX, IP_PORTMAP_MAX);
   #endif
@@ -23,6 +45,8 @@ void setup()
   serialSetup();
   waitForFirstInput();
   welcome();
+  delay(500); // Give system time to stabilize before SD init
+  initSDCard();
   wifiSetup();
   webserverSetup();
 }

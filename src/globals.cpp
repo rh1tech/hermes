@@ -252,6 +252,7 @@ void hangUp()
                 tcpClient.stop();
         }
         callConnected = false;
+        cmdMode = true;
         setCarrierDCDPin(callConnected);
         sendResult(RES_NOCARRIER);
         connectTime = 0;
@@ -323,42 +324,45 @@ void handleFlowControl()
 
 void handleCommandMode()
 {
-        if (Serial.available())
-        {
-                char chr = Serial.read();
-                if ((chr >= 193) && (chr <= 218))
-                {
-                        chr -= 96;
-                }
-                if ((chr == '\n') || (chr == '\r'))
-                {
-                        command();
-                }
-                else if ((chr == 8) || (chr == 127) || (chr == 20))
-                {
-                        cmd.remove(cmd.length() - 1);
-                        if (echo == true)
-                        {
-                                Serial.write(chr);
-                        }
-                }
-                else
-                {
-                        if (cmd.length() < MAX_CMD_LENGTH)
-                                cmd.concat(chr);
-                        if (echo == true)
-                        {
-                                Serial.write(chr);
-                        }
-                        if (hex)
-                        {
-                                Serial.print(chr, HEX);
-                        }
-                }
-        }
-}
-
-void restoreCommandModeIfDisconnected()
+	if (Serial.available())
+	{
+		char chr = Serial.read();
+		
+		// Echo the original character BEFORE any transformation
+		// This ensures Win1251 and other 8-bit characters are echoed correctly
+		if (echo == true)
+		{
+			Serial.write(chr);
+		}
+		
+		// Transform uppercase letters for command parsing only
+		// This does NOT affect what was echoed above
+		if ((chr >= 193) && (chr <= 218))
+		{
+			chr -= 96;
+		}
+		
+		if ((chr == '\n') || (chr == '\r'))
+		{
+			command();
+		}
+		else if ((chr == 8) || (chr == 127) || (chr == 20))
+		{
+			cmd.remove(cmd.length() - 1);
+			// Backspace character was already echoed above
+		}
+		else
+		{
+			if (cmd.length() < MAX_CMD_LENGTH)
+				cmd.concat(chr);
+			// Character was already echoed above
+			if (hex)
+			{
+				Serial.print(chr, HEX);
+			}
+		}
+	}
+}void restoreCommandModeIfDisconnected()
 {
         bool pppConnected = false;
 #ifdef ESP8266
@@ -367,7 +371,13 @@ void restoreCommandModeIfDisconnected()
     #endif
 #endif
         
-        if ((!tcpClient.connected() && !pppConnected) && (cmdMode == false) && callConnected == true)
+#ifdef ESP32
+        bool sshActive = sshConnected;
+#else
+        bool sshActive = false;
+#endif
+        
+        if ((!tcpClient.connected() && !pppConnected && !sshActive) && (cmdMode == false) && callConnected == true)
         {
                 cmdMode = true;
                 sendResult(RES_NOCARRIER);
