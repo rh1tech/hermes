@@ -126,28 +126,7 @@ void handleQuietMode(String upCmd)
 }
 
 // ========================== Connect to SSH ===========================
-
-void connectSSH(String upCmd)
-{
-  String host, port;
-  int portIndex = upCmd.indexOf(":");
-  if (portIndex != -1)
-  {
-    host = upCmd.substring(5, portIndex);
-    port = upCmd.substring(portIndex + 1, upCmd.length());
-  }
-  else
-  {
-    host = upCmd.substring(5, upCmd.length());
-    port = "22";
-  }
-  host.trim();
-  port.trim();
-  Serial.print("Dialing ");
-  Serial.print(host);
-  Serial.print(":");
-  Serial.println(port);
-}
+// SSH implementation moved to ssh.cpp
 
 // ========================= Dial Out Function =========================
 
@@ -380,9 +359,9 @@ void handleDial(const String &up, const String &)
   dialOut(up);
 }
 
-void handleSSHConnect(const String &up, const String &)
+void handleSSHConnect(const String &up, const String &raw)
 {
-  connectSSH(up);
+  connectSSH(raw);
 }
 
 void handleTelnetMode(const String &up, const String &)

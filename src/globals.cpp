@@ -252,6 +252,7 @@ void hangUp()
                 tcpClient.stop();
         }
         callConnected = false;
+        cmdMode = true;
         setCarrierDCDPin(callConnected);
         sendResult(RES_NOCARRIER);
         connectTime = 0;
@@ -370,7 +371,13 @@ void handleCommandMode()
     #endif
 #endif
         
-        if ((!tcpClient.connected() && !pppConnected) && (cmdMode == false) && callConnected == true)
+#ifdef ESP32
+        bool sshActive = sshConnected;
+#else
+        bool sshActive = false;
+#endif
+        
+        if ((!tcpClient.connected() && !pppConnected && !sshActive) && (cmdMode == false) && callConnected == true)
         {
                 cmdMode = true;
                 sendResult(RES_NOCARRIER);
